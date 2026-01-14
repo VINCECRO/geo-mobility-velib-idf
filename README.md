@@ -1,60 +1,27 @@
-# Geo_mobilite_IDF_project
+# Geo_mobilité IDF – Monitoring spatio-temporel Vélib’
 
-## 📍 Objectif
+## 🚀 Objectif du projet
 
-Ce projet open source vise à analyser l’évolution temporelle de l’offre de transport public
-en Île-de-France à partir des données **GTFS publiées par Île-de-France Mobilités**.
+Ce projet a pour but de construire une **chaîne de données complète et réaliste** pour le suivi des stations Vélib’ en Île-de-France, avec un focus sur :
 
-Il met en œuvre une chaîne de données complète incluant :
-- ingestion automatisée de fichiers GTFS,
-- historisation des données (SCD Type 2),
-- modélisation bi-temporelle,
-- analyse géospatiale,
-- visualisation et interrogation analytique.
+- Ingestion continue des données via l’API officielle Vélib’
+- Stockage géospatial avec PostgreSQL + PostGIS
+- Modélisation analytique avec DBT (staging, marts, tests)
+- Analyses spatio-temporelles avancées (SIG, clustering, vélos disponibles, etc.)
+- Bonnes pratiques d’ingénierie : CI/CD, versioning, tests, gestion des secrets
 
----
-
-## 📊 Source de données
-
-Les données proviennent du jeu de données officiel :
-
-**Offre horaires transport public – GTFS IDFM**  
-https://data.iledefrance-mobilites.fr
-
-L’ingestion s’appuie sur l’API **Opendatasoft Explore v2.1** pour :
-- lister les publications disponibles,
-- détecter les mises à jour,
-- télécharger automatiquement les fichiers GTFS.
+> ⚠️ Ce projet est conçu comme un **portfolio technique**, pas comme une application en production.
 
 ---
 
-## 🧠 Concepts clés
-
-- **Double temporalité**
-  - `publication_date` : date de publication du GTFS
-  - `service_date` : date réelle de circulation du service
-
-- **Dimensions historisées (SCD Type 2)**
-  - arrêts (`stops`)
-  - lignes (`routes`)
-  - agences (`agencies`)
-
-- **Faits bitemporels**
-  - passages par arrêt
-  - fréquences
-  - offre de service
-
----
-
-## ⚙️ Architecture
+## 📦 Structure du repository
 
 ```text
-API Opendatasoft (GTFS)
-        ↓
-Ingestion Airflow (Python)
-        ↓
-PostgreSQL + PostGIS (raw + analytics)
-        ↓
-DBT (snapshots & models)
-        ↓
-Apache Superset (cartes & dashboards)
+velib-monitoring/
+├── docker-compose.yml       # Orchestration des containers
+├── .env.velib.example       # Template secrets / API key
+├── README.md
+├── ingestion/               # Scripts Python pour ingestion API
+├── dbt/                     # Modélisation et transformations DBT
+├── airflow/                 # DAGs Airflow (optionnel pour orchestration)
+└── superset/                # Dashboards (optionnel)
