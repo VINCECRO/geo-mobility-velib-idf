@@ -1,0 +1,45 @@
+services:
+  # ---------------------------
+  # PostGIS Database
+  # ---------------------------
+  postgres:
+    image: postgis/postgis:15-3.4
+    container_name: velib-postgres
+    environment:
+      POSTGRES_DB: velib
+      POSTGRES_USER: velib
+      POSTGRES_PASSWORD: velib
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # ---------------------------
+  # Airflow
+  # ---------------------------
+  airflow:
+    image: apache/airflow:3.1.6-python3.12
+    container_name: velib-airflow
+    depends_on:
+      - postgres
+    env_file:
+      - .env # Contain Velib API key
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://velib:velib@postgres:5432/velib
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      #Admin configuration  with FAB
+      AIRFLOW__CORE__AUTH_MANAGER: "airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager"
+      _PIP_ADDITIONAL_REQUIREMENTS: "apache-airflow-providers-fab"
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+      - ./airflow/init_script:/opt/airflow/init_script
+      - ./ingestion:/opt/airflow/ingestion
+    ports:
+      - "8080:8080"
+    entrypoint: ["/opt/airflow/init_script/init_airflow.sh"]
+      
+volumes:
+  pgdata:
