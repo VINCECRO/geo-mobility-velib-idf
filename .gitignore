@@ -1,6 +1,8 @@
 # Virtual environments
 .venv/
 .venv_dev/
+.env.*
+!.env.example
 
 
 # Logs
