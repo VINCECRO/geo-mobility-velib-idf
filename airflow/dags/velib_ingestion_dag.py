@@ -26,6 +26,8 @@ def velib_ingestion_dag():
         logger = logging.getLogger("airflow.task")
 
         logger.info("Démarrage de la tâche")
+        import time
+        time.sleep(30)
         x=1+1
         logger.info(f"x = {x}")
         # simuler une erreur pour voir le traceback

@@ -7,7 +7,7 @@ x-airflow-common: &airflow-common
     - .env
   environment:
     &airflow-common-env
-    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__EXECUTOR: SequentialExecutor
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres-airflow:5432/airflow
     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
     AIRFLOW__CORE__FERNET_KEY: 'quelque chose'
@@ -28,7 +28,6 @@ x-airflow-common: &airflow-common
 services:
   airflow-init:
     <<: *airflow-common
-    # entrypoint: ["/opt/airflow/init_script/init_airflow.sh"]
     environment:
       <<: *airflow-common-env
       _AIRFLOW_DB_MIGRATE: 'true'
