@@ -1,18 +1,19 @@
-# ---------------------------
-# Configuration commune Airflow
-# ---------------------------
 x-airflow-common: &airflow-common
-  image: apache/airflow:3.1.6-python3.12
+  image: apache/airflow:3.1.0-python3.12
   env_file:
     - .env
   environment:
     &airflow-common-env
-    AIRFLOW__CORE__EXECUTOR: SequentialExecutor
-    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres-airflow:5432/airflow
+    TZ: Europe/Paris
+    AIRFLOW__CORE__EXECUTOR: CeleryExecutor
     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
-    AIRFLOW__CORE__FERNET_KEY: 'quelque chose'
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres-airflow:5432/airflow
+    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres-airflow:5432/airflow
+    AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
+    AIRFLOW__CORE__FERNET_KEY: ''
+    AIRFLOW__API_AUTH__JWT_SECRET: 'qt2Edq6LIRdv5k0DDznVOA=='
     AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
-    _PIP_ADDITIONAL_REQUIREMENTS: ''
+    AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://airflow-apiserver:8080/execution/'
     PYTHONPATH: /opt/airflow:/opt/airflow/ingestion
   volumes:
     - ./airflow/init_script:/opt/airflow/init_script
@@ -22,45 +23,13 @@ x-airflow-common: &airflow-common
     - ./airflow/ingestion:/opt/airflow/ingestion
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
+    &airflow-common-depends-on
+    redis:
+      condition: service_healthy
     postgres-airflow:
       condition: service_healthy
 
 services:
-  airflow-init:
-    <<: *airflow-common
-    environment:
-      <<: *airflow-common-env
-      _AIRFLOW_DB_MIGRATE: 'true'
-      _AIRFLOW_WWW_USER_CREATE: 'true'
-      _AIRFLOW_WWW_USER_USERNAME: ${AIRFLOW_ADMIN_USERNAME}
-      _AIRFLOW_WWW_USER_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD}
-      _AIRFLOW_WWW_USER_EMAIL: admin@example.com
-      _AIRFLOW_WWW_USER_FIRSTNAME: Admin
-      _AIRFLOW_WWW_USER_LASTNAME: Airflow
-      _AIRFLOW_WWW_USER_ROLE: Admin
-  # ---------------------------
-  # PostGIS Database (INDÉPENDANT - vos données métier)
-  # ---------------------------
-  postgres-velib:
-    image: postgis/postgis:15-3.4
-    container_name: velib-postgres
-    environment:
-      POSTGRES_DB: velib
-      POSTGRES_USER: velib
-      POSTGRES_PASSWORD: velib
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U velib"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  # ---------------------------
-  # PostgreSQL pour Airflow (métadonnées UNIQUEMENT)
-  # ---------------------------
   postgres-airflow:
     image: postgres:13
     container_name: airflow-postgres
@@ -69,7 +38,7 @@ services:
       POSTGRES_USER: airflow
       POSTGRES_PASSWORD: airflow
     ports:
-      - "5433:5432"  # Port différent pour éviter les conflits
+      - "5433:5432"
     volumes:
       - airflow-pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -77,43 +46,19 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-
-
-  airflow-scheduler:
-    <<: *airflow-common
-    command: scheduler
+  redis:
+    # Redis is limited to 7.2-bookworm due to licencing change
+    # https://redis.io/blog/redis-adopts-dual-source-available-licensing/
+    image: redis:7.2-bookworm
+    expose:
+      - 6379
     healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:8974/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 30s
+      retries: 50
       start_period: 30s
     restart: always
-    depends_on:
-      airflow-init:
-        condition: service_completed_successfully
-
-  # ---------------------------
-  # DAG Processor (OBLIGATOIRE)
-  # ---------------------------
-  airflow-dag-processor:
-    <<: *airflow-common
-    command: dag-processor
-    restart: always
-    depends_on:
-      airflow-init:
-        condition: service_completed_successfully
-
-  # ---------------------------
-  # Triggerer (recommandé)
-  # ---------------------------
-  airflow-triggerer:
-    <<: *airflow-common
-    command: triggerer
-    restart: always
-    depends_on:
-      airflow-init:
-        condition: service_completed_successfully
 
   airflow-apiserver:
     <<: *airflow-common
@@ -128,32 +73,76 @@ services:
       start_period: 30s
     restart: always
     depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+  airflow-worker:
+    <<: *airflow-common
+    command: celery worker
+    healthcheck:
+      # yamllint disable rule:line-length
+      test:
+        - "CMD-SHELL"
+        - 'celery --app airflow.providers.celery.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}" || celery --app airflow.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}"'
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    environment:
+      <<: *airflow-common-env
+      # Required to handle warm shutdown of the celery workers properly
+      # See https://airflow.apache.org/docs/docker-stack/entrypoint.html#signal-propagation
+      DUMB_INIT_SETSID: "0"
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-apiserver:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-triggerer:
+    <<: *airflow-common
+    command: triggerer
+    restart: always
+    depends_on:
       airflow-init:
         condition: service_completed_successfully
 
   
+  airflow-dag-processor:
+    <<: *airflow-common
+    command: dag-processor
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-init:
+    <<: *airflow-common
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_MIGRATE: 'true'
+      _AIRFLOW_WWW_USER_CREATE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: ${AIRFLOW_ADMIN_USERNAME}
+      _AIRFLOW_WWW_USER_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD}
+      _AIRFLOW_WWW_USER_EMAIL: admin@example.com
+      _AIRFLOW_WWW_USER_FIRSTNAME: Admin
+      _AIRFLOW_WWW_USER_LASTNAME: Airflow
+      _AIRFLOW_WWW_USER_ROLE: Admin
+    user: "0:0"
+
 
 volumes:
-  pgdata:           # Volume pour vos données Velib
-  airflow-pgdata:   # Volume pour les métadonnées Airflow
-  # ---------------------------
-  # Initialisation Airflow
-  # ---------------------------
-  # airflow-init:
-  #   <<: *airflow-common
-  #   container_name: airflow-init
-  #   ports:
-  #     - "8080:8080"
-  #   environment:
-  #     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
-  #     AIRFLOW__CORE__EXECUTOR: LocalExecutor
-  #     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres-airflow:5432/airflow
-  #     AIRFLOW__CORE__FERNET_KEY: "" 
-  #     AIRFLOW__API__JWT_SECRET: ""
-  #     ## PATH for custom ingestion modules
-  #     PYTHONPATH: /opt/airflow:/opt/airflow/ingestion
-  #     _AIRFLOW_DB_MIGRATE: 'true'
-  #     _AIRFLOW_WWW_USER_CREATE: 'true'
-  #   entrypoint: ["/opt/airflow/init_script/init_airflow.sh"]
-
-
+  airflow-pgdata:
+  pgdata:
