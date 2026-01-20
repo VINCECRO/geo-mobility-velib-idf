@@ -2,8 +2,6 @@
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo 
 from typing import List, Dict
-import uuid
-
 
 def ts_from_unix(ts: int) -> datetime:
     # Convert Unix Timestamp to Paris zone time stamp
@@ -24,7 +22,7 @@ def parse_stations(stations: dict,retrieved_timestamp:datetime) -> List[Dict]:
                 "rental_methods": s.get("rental_methods", []),
                 "station_opening_hours": s.get("station_opening_hours"),
                 "last_updated_at":last_updated_timestamp,
-                "retrieved_at":retrieved_timestamp
+                "extracted_at":retrieved_timestamp
             }
         )
     return parsed_table
@@ -58,7 +56,7 @@ def parse_station_status(station_status: dict, retrieved_timestamp:datetime) -> 
                 "is_renting": s.get("is_renting") == 1,
                 "is_returning": s.get("is_returning") == 1,
                 "last_updated_at":last_updated_timestamp,
-                "retrieved_at":retrieved_timestamp
+                "extracted_at":retrieved_timestamp
             }
         )
     return parsed_table

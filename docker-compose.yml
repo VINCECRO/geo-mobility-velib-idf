@@ -14,13 +14,15 @@ x-airflow-common: &airflow-common
     AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW_JWT_SECRET}
     AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
     AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://airflow-apiserver:8080/execution/'
-    PYTHONPATH: /opt/airflow:/opt/airflow/ingestion
+    AIRFLOW__VELIB_DB_CONN:
+      postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+    PYTHONPATH: /opt/airflow:/opt/airflow/extract_Velib_API
   volumes:
     - ./airflow/init_script:/opt/airflow/init_script
     - ./airflow/dags:/opt/airflow/dags
     - ./airflow/logs:/opt/airflow/logs
     - ./airflow/plugins:/opt/airflow/plugins
-    - ./airflow/ingestion:/opt/airflow/ingestion
+    - ./airflow/extract_Velib_API:/opt/airflow/extract_Velib_API
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on
@@ -30,7 +32,7 @@ x-airflow-common: &airflow-common
       condition: service_healthy
 
 services:
-
+  ################## AIRFLOW SERVICES ##################
   postgres-airflow:
     image: postgres:13
     container_name: airflow-postgres
@@ -139,6 +141,24 @@ services:
       _AIRFLOW_WWW_USER_ROLE: Admin
     user: "0:0"
 
+  ################## POSTGIS SERVICES ##################
+  postgres-velib:
+    image: postgis/postgis:15-3.4
+    container_name: velib-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+    volumes:
+      - velib-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U velib"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 volumes:
   airflow-pgdata:
-  pgdata:
+  velib-pgdata:
