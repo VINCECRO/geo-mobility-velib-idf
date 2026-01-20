@@ -147,6 +147,8 @@ services:
   postgres-velib:
     image: postgis/postgis:15-3.4
     container_name: velib-postgres
+    env_file:
+    - .env
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -155,9 +157,9 @@ services:
       - ${POSTGRES_PORT}:${POSTGRES_PORT}
     volumes:
       - velib-pgdata:/var/lib/postgresql/data
-      - ./airflow/init_script:/docker-entrypoint-initdb.d
+      - ./airflow/init_script/Postgis:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U velib"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
