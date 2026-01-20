@@ -38,7 +38,7 @@ def upsert_stations(conn: connection, stations: List[StationDict]) -> None:
             station_hash = compute_hash(station)
             station_id = station['station_id']
             now = datetime.now()
-            # Current valid station_id (current_validity=True)
+            # fetch current valid station_id (current_validity=True)
             cur.execute("""
                 SELECT id, hash_diff
                 FROM staging.stations_scd
@@ -76,7 +76,7 @@ def upsert_stations(conn: connection, stations: List[StationDict]) -> None:
                             valid_to,
                             current_validity,
                             last_updated_at,
-                            retrieved_at
+                            extracted_at
                         )
                         VALUES (
                             %s, %s, %s, %s, 
@@ -95,7 +95,7 @@ def upsert_stations(conn: connection, stations: List[StationDict]) -> None:
                         station_hash,
                         now,  # valid_from
                         station.get('last_updated_at'),
-                        station.get('retrieved_at')
+                        station.get('extracted_at')
                     ))
                     stats['updated'] += 1
                     logger.info(f"✓ Station {station_id} changed: new version created (hash: {current_hash[:8]} → {station_hash[:8]})")
@@ -125,7 +125,7 @@ def upsert_stations(conn: connection, stations: List[StationDict]) -> None:
                             valid_to,
                             current_validity,
                             last_updated_at,
-                            retrieved_at
+                            extracted_at
                         )
                         VALUES (
                             %s, %s, %s, %s, 
@@ -144,14 +144,14 @@ def upsert_stations(conn: connection, stations: List[StationDict]) -> None:
                         station_hash,
                         now,  # valid_from
                         station.get('last_updated_at'),
-                        station.get('retrieved_at')
+                        station.get('extracted_at')
                     ))
                     
                     stats['inserted'] += 1
                     logger.info(f"✓ Station {station_id} inserted (new station)")
 
         
-        # Log final des statistiques
+        # Final Log
         logger.info(
             f"✓ Processed {len(stations)} stations: "
             f"{stats['inserted']} inserted, "

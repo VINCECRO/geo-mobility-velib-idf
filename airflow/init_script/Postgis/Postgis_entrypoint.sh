@@ -28,7 +28,7 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
         valid_to TIMESTAMP,                       -- ← NULL = enregistrement actuel
         current_validity BOOLEAN DEFAULT TRUE,
         last_updated_at TIMESTAMP,
-        retrieved_at TIMESTAMP
+        extracted_at TIMESTAMP
     );
     
     -- Index unique partiel : garantit un seul enregistrement current par station
@@ -50,22 +50,27 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     CREATE TABLE IF NOT EXISTS staging.station_status (
         id SERIAL PRIMARY KEY,
         station_id BIGINT NOT NULL,
+        station_code TEXT,
         num_bikes_available INT,
+        numBikesAvailable INT,
         mechanical_available INT,
         ebikes_available INT,
         num_docks_available INT,
-        is_installed BOOLEAN,
-        is_renting BOOLEAN,
-        is_returning BOOLEAN,
+        numDocksAvailable INT,
+        is_installed INT,
+        is_renting INT,
+        is_returning INT,
+        rental_methods JSONB,
+        last_reported_at TIMESTAMP,
         last_updated_at TIMESTAMP,
-        retrieved_at TIMESTAMP
+        extracted_at TIMESTAMP
     );
     
     CREATE INDEX IF NOT EXISTS idx_station_status_station_id 
     ON staging.station_status(station_id);
     
-    CREATE INDEX IF NOT EXISTS idx_station_status_retrieved_at 
-    ON staging.station_status(retrieved_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_station_status_extracted_at 
+    ON staging.station_status(extracted_at DESC);
 EOSQL
 
 echo "✓ Initialisation terminée avec succès!"

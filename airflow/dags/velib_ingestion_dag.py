@@ -11,7 +11,7 @@ from extract_Velib_API.velib_parser import parse_stations, parse_station_status
 # Insertion
 from ingest_Velib_API.db_connect import get_connection
 from ingest_Velib_API.ingest_station_SCD2 import upsert_stations
-
+from ingest_Velib_API.ingest_station_status import insert_station_status
 
 @dag(
     dag_id="velib_extract_ingestion_dag",
@@ -39,12 +39,11 @@ def velib_extract_ingestion_dag():
         payload = fetch_station_status()
         payload_ts=current_ts()
         parsed_stations_status=parse_station_status(payload,payload_ts)
-
         return parsed_stations_status
 
     @task
-    def load_stations(parsed_station: list, parsed_status: list):
-        #### Insertion into DB staging ####
+    def load_stations(parsed_station: list):
+        #### Insertion into DB at staging level ####
         print("Starting load_stations task...")
         conn = get_connection()
         print("connection to DB done")
@@ -53,23 +52,33 @@ def velib_extract_ingestion_dag():
             conn.commit()   # ✅ OBLIGATOIRE
             print(f"✓ Upserted {len(parsed_station)} stations")
         except Exception as e:
-            conn.rollback() # ✅ rollback transactionnel
+            conn.rollback() # rollback transactionnel
             raise           # ❗ Airflow doit voir l’erreur
         finally:
             conn.close()
+            
+    @task
+    def load_stations_status(parsed_station_status: list):
+        #### Insertion into DB at staging level ####
+        print("Starting load_stations status task...")
+        conn = get_connection()
+        print("connection to DB done")
+        try:
+            insert_station_status(conn,parsed_station_status)
+            conn.commit()   # ✅ OBLIGATOIRE
+            print(f"✓ Inserted station status")
+        except Exception as e:
+            conn.rollback() # rollback transactionnel
+            raise           # ❗ Airflow doit voir l’erreur
+        finally:
+            conn.close()        
 
-    # @task
-    # def load_status(parsed_data: dict):
-    #     """Insert les status (append-only) dans la base"""
-    #     status = parsed_data["status"]
-    #     upsert_station_status(status)
-    #     print(f"Inserted {len(status)} station status records into DB")
 
     # Orchestration TaskFlow
     parsed_station = extract_station()
     parsed_station_status = extract_station_status()
-    load_stations(parsed_station, parsed_station_status)
-    # load_status(parsed)
+    load_stations(parsed_station)
+    load_stations_status(parsed_station_status)
 
 # nommer le DAG explicitement pour Airflow
 velib_ingestion_dag_instance = velib_extract_ingestion_dag()
