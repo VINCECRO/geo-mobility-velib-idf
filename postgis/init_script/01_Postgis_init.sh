@@ -9,15 +9,13 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     -- Extensions PostGIS
     CREATE EXTENSION IF NOT EXISTS postgis;
     CREATE EXTENSION IF NOT EXISTS postgis_topology;
-    
-    -- Schéma staging
-    CREATE SCHEMA IF NOT EXISTS staging;
+
 
     -- Schéma raw
     CREATE SCHEMA IF NOT EXISTS raw;
     
     -- Table SCD2 des stations
-    CREATE TABLE IF NOT EXISTS staging.stations_scd (
+    CREATE TABLE IF NOT EXISTS raw.stations_scd (
         id SERIAL PRIMARY KEY,                    -- ← Clé primaire auto-incrémentée
         station_id BIGINT NOT NULL,                  -- ← Pas PRIMARY KEY, peut se répéter
         station_code TEXT,
@@ -36,18 +34,18 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     
     -- Index unique partiel : garantit un seul enregistrement current par station
     CREATE UNIQUE INDEX IF NOT EXISTS unique_current_station_idx 
-    ON staging.stations_scd(station_id) 
+    ON raw.stations_scd(station_id) 
     WHERE current_validity = TRUE;
     
     -- Autres index pour performance
     CREATE INDEX IF NOT EXISTS idx_stations_scd_station_id 
-    ON staging.stations_scd(station_id);
+    ON raw.stations_scd(station_id);
     
     CREATE INDEX IF NOT EXISTS idx_stations_scd_geom 
-    ON staging.stations_scd USING GIST(geom);
+    ON raw.stations_scd USING GIST(geom);
     
     CREATE INDEX IF NOT EXISTS idx_stations_scd_valid_from 
-    ON staging.stations_scd(valid_from DESC);
+    ON raw.stations_scd(valid_from DESC);
     
     -- Table des statuts de stations
     CREATE TABLE IF NOT EXISTS raw.station_status (

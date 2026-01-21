@@ -1,0 +1,28 @@
+name: velib_project
+version: 1.0.0
+config-version: 2
+
+profile: velib_project_profile  # correspond à ton profile dans profiles.yml
+
+# Répertoire des modèles DBT
+model-paths: ["models"]
+snapshot-paths: ["snapshots"]
+macro-paths: ["macros"]
+seed-paths: ["seeds"]
+
+target-path: "target"        # fichiers compilés
+clean-targets: ["target", "dbt_modules"]
+
+models:
+  raw:
+    +schema: raw          # toutes les tables brutes iront dans le schéma raw
+    +materialized: table
+  staging:
+    +schema: staging
+    +materialized: table
+  marts:
+    +schema: marts
+    +materialized: table
+  geo_assets:
+    +schema: geo_assets
+    +materialized: table

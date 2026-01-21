@@ -41,7 +41,7 @@ def upsert_stations(conn: connection, stations: List[StationDict]) -> None:
             # fetch current valid station_id (current_validity=True)
             cur.execute("""
                 SELECT id, hash_diff
-                FROM staging.stations_scd
+                FROM raw.stations_scd
                 WHERE station_id = %s 
                   AND current_validity = TRUE
             """, (station_id,))
@@ -54,7 +54,7 @@ def upsert_stations(conn: connection, stations: List[StationDict]) -> None:
                     #-------------------------------------------------------------
                     # Step 1 : closing previous version
                     cur.execute("""
-                        UPDATE staging.stations_scd
+                        UPDATE raw.stations_scd
                         SET current_validity = FALSE,
                             valid_to = %s
                         WHERE id = %s
@@ -63,7 +63,7 @@ def upsert_stations(conn: connection, stations: List[StationDict]) -> None:
                     
                     # Step 2 : Inserting new version
                     cur.execute("""
-                        INSERT INTO staging.stations_scd (
+                        INSERT INTO raw.stations_scd (
                             station_id,
                             station_code,
                             name,
@@ -112,7 +112,7 @@ def upsert_stations(conn: connection, stations: List[StationDict]) -> None:
                     #   New record detected (station_id not in DB)
                     #-------------------------------------------------------------
                     cur.execute("""
-                        INSERT INTO staging.stations_scd (
+                        INSERT INTO raw.stations_scd (
                             station_id,
                             station_code,
                             name,

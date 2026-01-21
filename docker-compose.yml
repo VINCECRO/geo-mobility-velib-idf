@@ -33,7 +33,11 @@ x-airflow-common: &airflow-common
       condition: service_healthy
 
 services:
-  ################## AIRFLOW SERVICES ##################
+  #-------------------------------------------------------------
+  #
+  # AIRFLOW SERVICES 
+  #
+  #-------------------------------------------------------------
   postgres-airflow:
     image: postgres:13
     container_name: airflow-postgres
@@ -144,7 +148,11 @@ services:
       _AIRFLOW_WWW_USER_ROLE: Admin
     user: "0:0"
 
-  ################## postgis SERVICES ##################
+  #-------------------------------------------------------------
+  #
+  # POSTGIS SERVICES 
+  #
+  #-------------------------------------------------------------
   postgres-velib:
     image: postgis/postgis:15-3.4
     container_name: postgres-velib
