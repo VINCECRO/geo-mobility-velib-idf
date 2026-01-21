@@ -86,12 +86,14 @@ Superset (cartes & KPI)
 ---
 
 ## 📁 Organisation du repository
+```text
 .
 ├── airflow/ # DAGs d’ingestion Vélib’
 ├── dbt/ # Modèles analytiques
 ├── postgres/ # Initialisation PostGIS & données géographiques
 ├── docker-compose.yml
 └── README.md
+```
 
 ---
 
