@@ -23,18 +23,19 @@ L’objectif est de concevoir une **chaîne data complète** permettant :
 
 ## 🏗️ Architecture globale
 
+```text
 API Vélib’
-│
-▼
+    │
+    ▼
 Airflow (ingestion)
-│
-▼
-PostgreSQL + PostGIS ◀── Données géographiques (communes, population)
-│
-▼
+    │
+    ▼
+PostgreSQL + PostGIS  ◀── Données géographiques
+    │                     (communes, population)
+    ▼
 DBT (staging & marts)
-│
-▼
+    │
+    ▼
 Superset (cartes & KPI)
 ---
 
@@ -100,7 +101,7 @@ Data Analyst / Scientist, expert SIG
 📍 Île-de-France  
 💼 Disponible pour missions freelance
 
-🔗 LinkedIn : [lien]  
+🔗 LinkedIn : www.linkedin.com/in/vincent-crozet
 
 ---
 
