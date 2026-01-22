@@ -44,7 +44,7 @@ sources:
       - name: communes_idf
         description: "List and geometries of communes in Île-de-France"
         columns:
-          - name: nomcom
+          - name: insee
             tests:
               - not_null
               - unique
@@ -56,7 +56,7 @@ sources:
       - name: pop_communes_idf
         description: "List and geometries of communes with population data in Île-de-France"
         columns:
-          - name: nomcom
+          - name: fid
             tests:
               - not_null
               - unique
