@@ -10,7 +10,7 @@
 *.log
 
 # dbt
-./dbt/target/*
+dbt/target/*
 
 # test local
 /test_local/
