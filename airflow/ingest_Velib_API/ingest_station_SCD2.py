@@ -118,7 +118,8 @@ def upsert_stations(conn: connection, stations: List[StationDict]) -> None:
                             station_code,
                             name,
                             capacity,
-                            geom,
+                            lon,
+                            lat,    
                             rental_methods,
                             station_opening_hours,
                             hash_diff,
@@ -130,7 +131,7 @@ def upsert_stations(conn: connection, stations: List[StationDict]) -> None:
                         )
                         VALUES (
                             %s, %s, %s, %s, 
-                            ST_SetSRID(ST_Point(%s, %s), 4326), 
+                            %s, %s, 
                             %s, %s, %s, %s, NULL, TRUE, %s, %s
                         )
                     """, (

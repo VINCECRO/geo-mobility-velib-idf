@@ -1,14 +1,10 @@
-{{ config(
-    materialized='table' 
-) }}
-
 with source as (
     select *
     from {{ source('velib', 'stations_scd') }}
 )
 
 select
-    station_id::int,
+    station_id::bigint,
     name,
     capacity::int,
     ST_SetSRID(
