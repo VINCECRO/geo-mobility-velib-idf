@@ -136,6 +136,9 @@ across Airflow components in a local Docker-based setup.
 
 ---
 
+## 🚧 To do
+- fixing dbt dag bug
+
 ## 👤 Auteur
 
 **Vincent Crozet**  

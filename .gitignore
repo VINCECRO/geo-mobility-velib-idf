@@ -9,5 +9,9 @@
 # Logs
 *.log
 
+# dbt
+./dbt/target/*
+
 # test local
 /test_local/
+

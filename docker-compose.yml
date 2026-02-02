@@ -19,6 +19,8 @@ x-airflow-common: &airflow-common
     AIRFLOW__VELIB_DB_CONN:
       postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
     PYTHONPATH: /opt/airflow:/opt/airflow/extract_Velib_API:/opt/airflow/ingest_Velib_API
+    DBT_PROFILES_DIR: /opt/airflow/dbt
+    DBT_PROJECT_DIR: /opt/airflow/dbt
   volumes:
     - ./airflow/dags:/opt/airflow/dags
     - ./airflow/logs:/opt/airflow/logs

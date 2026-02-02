@@ -4,5 +4,7 @@ FROM apache/airflow:3.1.0-python3.12
 USER airflow
 
 # installer dbt pour Postgres
-RUN pip install --no-cache-dir dbt-postgres==1.8.2
+RUN pip install --no-cache-dir \
+    dbt-core==1.8.2 \
+    dbt-postgres==1.8.2
 

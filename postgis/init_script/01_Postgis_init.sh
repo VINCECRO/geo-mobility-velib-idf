@@ -21,7 +21,8 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
         station_code TEXT,
         name TEXT,
         capacity INT,
-        geom GEOMETRY(Point, 4326),               -- ← Mieux que lat/lon séparés pour PostGIS
+        lon FLOAT,
+        lat FLOAT,
         rental_methods JSONB,
         station_opening_hours TEXT,
         hash_diff VARCHAR(32) NOT NULL,
@@ -40,9 +41,6 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     -- Autres index pour performance
     CREATE INDEX IF NOT EXISTS idx_stations_scd_station_id 
     ON raw.stations_scd(station_id);
-    
-    CREATE INDEX IF NOT EXISTS idx_stations_scd_geom 
-    ON raw.stations_scd USING GIST(geom);
     
     CREATE INDEX IF NOT EXISTS idx_stations_scd_valid_from 
     ON raw.stations_scd(valid_from DESC);

@@ -1,10 +1,18 @@
-{{ config(
-    materialized='table' 
-) }}
+
+  
+    
+
+  create  table "velib_DB"."staging"."stg_velib_stations_timeseries__dbt_tmp"
+  
+  
+    as
+  
+  (
+    
 
 with source as (
     select *
-    from {{ source('velib', 'stations_scd') }}
+    from "velib_DB"."raw"."stations_scd"
 )
 
 select
@@ -17,3 +25,5 @@ select
     ) as geom,
     last_updated_at::timestamp
 from source
+  );
+  

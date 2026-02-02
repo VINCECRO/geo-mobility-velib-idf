@@ -6,7 +6,7 @@ sources:
     description: "Raw Velib data ingested from the Velib API"
 
     tables:
-      - name: stations
+      - name: stations_scd
         description: "Velib stations location and details with SCD2 versionning"
         columns:
           - name: id

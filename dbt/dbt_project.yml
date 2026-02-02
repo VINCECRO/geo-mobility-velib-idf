@@ -14,15 +14,16 @@ target-path: "target"        # fichiers compilés
 clean-targets: ["target", "dbt_modules"]
 
 models:
-  raw:
-    +schema: raw          # toutes les tables brutes iront dans le schéma raw
-    +materialized: table
-  staging:
-    +schema: staging
-    +materialized: table
-  marts:
-    +schema: marts
-    +materialized: table
-  geo_assets:
-    +schema: geo_assets
-    +materialized: table
+  velib_project:
+    raw:
+      +schema: raw         
+      +materialized: table
+    staging:
+      +schema: staging
+      +materialized: table
+    marts:
+      +schema: marts
+      +materialized: view
+    geo_assets:
+      +schema: geo_assets
+      +materialized: table

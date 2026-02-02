@@ -8,6 +8,6 @@ velib_project_profile:
       password: "{{ env_var('POSTGRES_PASSWORD') }}"
       port: "{{ env_var('POSTGRES_PORT') | int }}"
       dbname: "{{ env_var('POSTGRES_DB') }}"
-      schema: raw               # DBT utilisera ce schéma par défaut
+      schema: public               # DBT utilisera ce schéma par défaut
       threads: 1
       keepalives_idle: 0
