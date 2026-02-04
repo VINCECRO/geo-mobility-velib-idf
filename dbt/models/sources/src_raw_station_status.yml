@@ -24,7 +24,22 @@ sources:
           - ~1,400 active stations
           - 12 snapshots/hour/station
           - ~400,000 rows/day
-          
+
+        data_tests:    
+        - columns_must_match:  
+              column_a: num_bikes_available
+              column_b: numBikesAvailable
+              config:
+                severity: error
+                store_failures: true
+        - sum_must_match:  
+              column_a: mechanical_available
+              column_b: ebikes_available
+              column_c: numBikesAvailable
+              config:
+                severity: error
+                store_failures: true
+
         freshness:
           warn_after: {count: 15, period: minute}
           error_after: {count: 30, period: minute}
@@ -63,7 +78,7 @@ sources:
             data_tests:
               - not_null
               - dbt_utils.expression_is_true:
-                  expression: ">= 0"
+                  expression: "{{ column_name }} >= 0"
           ##
           - name: numBikesAvailable
             description: |
@@ -77,7 +92,7 @@ sources:
               Number of mechanical (non-electric) bikes available
             data_tests:
               - dbt_utils.expression_is_true:
-                  expression: ">= 0"
+                  expression: "{{ column_name }} >= 0"
           ##
           - name: ebikes_available
             description: |
@@ -86,7 +101,7 @@ sources:
               Vélib bikes with electric pedal assistance.
             data_tests:
               - dbt_utils.expression_is_true:
-                  expression: ">= 0"
+                  expression: "{{ column_name }} >= 0"
           ##
           - name: num_docks_available
             description: |
@@ -101,7 +116,7 @@ sources:
             data_tests:
               - not_null
               - dbt_utils.expression_is_true:
-                  expression: ">= 0"
+                  expression: "{{ column_name }} >= 0"
           ##
           - name: numDocksAvailable
             description: |

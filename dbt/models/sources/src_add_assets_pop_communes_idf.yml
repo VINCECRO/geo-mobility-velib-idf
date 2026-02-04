@@ -6,7 +6,7 @@ sources:
     schema: add_assets
 
     tables:  
-      - name: pop_communes_idf
+      - name: pop_commune_idf
         description: |
           Population of IDF communes with shapefile
           
@@ -23,7 +23,7 @@ sources:
             data_tests:
               - not_null
           ##
-          - name: Population_total
+          - name: population_total
             description: |
               Commune Population
               

@@ -76,6 +76,7 @@ services:
     command: api-server
     ports:
       - "8080:8080"
+      - "8001:8001"  # For DBT docs
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/api/v2/version"]
       interval: 30s
@@ -140,6 +141,7 @@ services:
 
   airflow-init:
     <<: *airflow-common
+    entrypoint: /bin/bash
     environment:
       <<: *airflow-common-env
       _AIRFLOW_DB_MIGRATE: 'true'
@@ -150,6 +152,25 @@ services:
       _AIRFLOW_WWW_USER_FIRSTNAME: ${AIRFLOW_ADMIN_FIRSTNAME}
       _AIRFLOW_WWW_USER_LASTNAME: ${AIRFLOW_ADMIN_LASTNAME}
       _AIRFLOW_WWW_USER_ROLE: Admin
+    command:
+      - -c
+      - |
+        echo ""
+        echo "================================================"
+        echo "📦 Installing DBT packages..."
+        echo "================================================"
+        
+        if [ -f /opt/airflow/dbt/packages.yml ]; then
+          cd /opt/airflow/dbt
+          dbt deps
+          echo "✅ DBT packages installed successfully"
+        else
+          echo "⚠️  No packages.yml found, skipping dbt deps"
+        fi
+        
+        echo "================================================"
+        echo ""
+        exec /entrypoint airflow version
     user: "0:0"
 
   #-------------------------------------------------------------

@@ -16,12 +16,25 @@ with DAG(
 ) as dag:
 
     dbt_debug = BashOperator(
-        task_id="dbt_debug",
+        task_id="dbt_transformation",
         bash_command="""
 
         # Aller dans le projet dbt
         cd /opt/airflow/dbt
-
-        dbt run --select staging --debug
+        echo ""
+        echo "╔═══════════════════════════════════════════════════════════════╗"
+        echo "║                   DBT RUN - STAGING                           ║"
+        echo "╚═══════════════════════════════════════════════════════════════╝"
+        echo ""
+        dbt run
+        echo ""
+        echo "╔═══════════════════════════════════════════════════════════════╗"
+        echo "║                      COMPLETED                                ║"
+        echo "╚═══════════════════════════════════════════════════════════════╝"
+        echo ""
+        # Générer la documentation
+        dbt docs generate
         """
+
+
     )

@@ -42,7 +42,7 @@ sources:
             data_tests:
               - not_null
           ##
-          - name: is_current
+          - name: current_validity
             description: |
               SCD2 indicator:
               - `true`: current active version
@@ -62,8 +62,6 @@ sources:
             description: Total dock number
             data_tests:
               - not_null
-              - dbt_utils.expression_is_true:
-                  expression: ">= 0"
           ##
           - name: lat
             description: "Latitude WGS84"

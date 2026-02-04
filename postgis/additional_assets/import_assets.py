@@ -36,6 +36,7 @@ def insert_geodata(file):
     gdf = gpd.read_file(file)
     print(f"📦 Loaded {len(gdf)} features from gpkg.")
     gdf=gdf.to_crs(epsg=4326)
+    gdf.columns = gdf.columns.str.lower()
     return gdf
 
 def create_table_with_geometry(engine, gdf, table_name: str, schema: str):
@@ -45,6 +46,7 @@ def create_table_with_geometry(engine, gdf, table_name: str, schema: str):
 ############# TABLE DATA ##########################
 def insert_data(file):
     df = pd.read_csv(file)
+    df.columns = df.columns.str.lower()
     print(f"📦 Loaded {len(df)} features from GeoJSON.")
     return df
 
