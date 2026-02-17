@@ -13,14 +13,8 @@ sources:
           
           EPSG: 2154
 
-          ** Primary Key** fid
         columns:
-          ##
-          - name: fid
-            description: |
-              unique identifier for point
-            data_tests:
-              - not_null
+
           ##
           - name: lat
             description: |

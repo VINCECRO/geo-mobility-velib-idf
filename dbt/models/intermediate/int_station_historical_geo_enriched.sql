@@ -10,7 +10,7 @@ SELECT
     s.station_code,
     s.name,
     s.capacity,
-    ST_Transform(s.geometry,4326) AS geometry,
+    s.geometry AS geometry,
     s.rental_methods,
     s.valid_from,       -- needed to ensure natural key
     s.valid_to,
@@ -19,7 +19,8 @@ SELECT
     -- Commune contenant la station à cette version
     c.nomcom AS commune_name,
     c.insee   AS commune_code,
-
+    c.numdep AS department_number,
+    
     -- Population de cette commune
     p.population AS commune_population
 

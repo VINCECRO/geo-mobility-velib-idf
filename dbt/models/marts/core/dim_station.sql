@@ -102,6 +102,7 @@ SELECT
     commune_name,
     commune_code,
     commune_population,
+    department_number,
     -- Population locale 500m (statique, haute résolution, SCD2-aware)
     population_500m,
     ROUND(local_population_per_bike, 0)   AS local_population_per_bike,

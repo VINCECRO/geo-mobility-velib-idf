@@ -12,6 +12,7 @@ SELECT
     s.geometry,
     c.nomcom AS nomcom,
     c.insee   AS insee,
+    c.numdep AS department_number,
     p.population
 FROM {{ ref('stg_velib_station_current') }} s
 LEFT JOIN {{ ref('stg_geo_communes_idf') }} c
