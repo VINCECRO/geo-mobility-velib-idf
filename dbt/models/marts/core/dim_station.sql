@@ -3,12 +3,13 @@
 {{
   config(
     materialized='table',
-    unique_key='station_id',
+    unique_key=['station_id', 'valid_from'],
     indexes=[
-      {'columns': ['station_id'], 'unique': true},
-      {'columns': ['commune_code']},
+      {'columns': ['station_id']},
+      {'columns': ['station_id', 'valid_from'], 'unique': True},
       {'columns': ['current_validity']},
-      {'columns': ['station_id', 'valid_from', 'valid_to']}
+      {'columns': ['commune_code']},
+      {'columns': ['valid_from', 'valid_to']}
     ]
   )
 }}
