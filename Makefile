@@ -66,7 +66,7 @@ logs-airflow:
 	$(DC_AIRFLOW) logs -f
 
 logs-superset:
-	$(DC_SHINY) logs -f
+	$(DC_SUPERSET) logs -f
 
 logs-shiny:
 	$(DC_SHINY) logs -f
