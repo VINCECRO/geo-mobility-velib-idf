@@ -16,7 +16,7 @@ server <- function(input, output, session) {
 
   # Toutes les stations actives (dim_station current_validity = TRUE)
   stations <- reactive({
-    query("
+    query(pool_velib,"
       SELECT
         station_id,
         station_code,
@@ -37,7 +37,7 @@ server <- function(input, output, session) {
 
   # Dernier snapshot disponible dans fct_station_availability
   last_snapshot <- reactive({
-    query("SELECT MAX(extracted_at) AS ts FROM marts.fct_station_availability") %>%
+    query(pool_velib,"SELECT MAX(extracted_at) AS ts FROM marts.fct_station_availability") %>%
       pull(ts)
   })
 
@@ -61,7 +61,7 @@ server <- function(input, output, session) {
   # ===========================================================================
 
   mod_overview_server("overview",
-    pool         = pool,
+    pool         = pool_velib,
     last_snapshot = last_snapshot,
     stations     = stations
   )
@@ -101,5 +101,5 @@ server <- function(input, output, session) {
   # MODULE : EXPLORATEUR SQL
   # ===========================================================================
 
-  mod_sql_explorer_server("sql")
+  mod_sql_explorer_server("sql", pool_velib = pool_velib, pool_dag = pool_dag)
 }

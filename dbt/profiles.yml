@@ -3,11 +3,11 @@ velib_project_profile:
   outputs:
     dev:
       type: postgres
-      host: "{{ env_var('POSTGRES_HOST') }}"
-      user: "{{ env_var('POSTGRES_USER') }}"
-      password: "{{ env_var('POSTGRES_PASSWORD') }}"
-      port: "{{ env_var('POSTGRES_PORT') | int }}"
-      dbname: "{{ env_var('POSTGRES_DB') }}"
+      host: "{{ env_var('POSTGIS_VELIB_HOST') }}"
+      user: "{{ env_var('POSTGIS_VELIB_USER') }}"
+      password: "{{ env_var('POSTGIS_VELIB_PASSWORD') }}"
+      port: "{{ env_var('POSTGIS_VELIB_PORT') | int }}"
+      dbname: "{{ env_var('POSTGIS_VELIB_DB') }}"
       schema: public               # DBT utilisera ce schéma par défaut
       threads: 1
       keepalives_idle: 0

@@ -61,7 +61,7 @@ mod_overview_server <- function(id, pool, last_snapshot, stations) {
     snapshot_data <- reactive({
       ts <- last_snapshot()
       req(ts)
-      query(glue("
+      query(glue(pool_velib,"
         SELECT
           station_id,
           station_name,

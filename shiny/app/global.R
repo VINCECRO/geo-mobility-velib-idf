@@ -49,10 +49,10 @@ pool_dag <- dbPool(
 
 onStop(function() {
   poolClose(pool_velib)
-  poolClose(pool_idfm)
+  poolClose(pool_dag)
 })
 
 # --- Helper requête ---
-query <- function(sql) {
+query <- function(pool,sql) {
   dbGetQuery(pool, sql)
 }

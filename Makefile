@@ -9,7 +9,8 @@ SHINY_EXEC     = $(DC_SHINY) exec shiny shiny
 
 .PHONY: up-airflow up-superset up-shiny up down-all down-airflow down-superset
 	down-shiny logs-airflow logs-superset logs-shiny shell-airflow shell-superset shell-shiny
-	down-clean-airflow down-clean-superset down-clean-shiny down-clean-all
+	down-clean-airflow down-clean-superset down-clean-shiny down-clean-all restart-airflow restart-superset
+	restart-shiny	
 
 # ── Start ──────────────────────────────────────────────────────────────
 up-airflow:
@@ -50,6 +51,20 @@ down-clean-shiny:
 down-clean-all: # Stop and clean Airflow & Shiny
 	$(DC_AIRFLOW) down -v
 	$(DC_SHINY) down -v
+
+# ── RESTART ──────────────────────────────────────────────────────────────────
+restart-airflow:
+	$(DC_AIRFLOW) restart
+
+restart-superset:
+	$(DC_SUPERSET) restart
+
+restart-shiny:
+	$(DC_SHINY) restart	
+
+restart-all: # Stop Airflow & Shiny
+	$(DC_AIRFLOW) restart
+	$(DC_SHINY) restart	
 
 # ── EXECUTE ──────────────────────────────────────────────────────────────────
 shell-airflow:

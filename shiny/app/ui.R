@@ -1,9 +1,10 @@
 library(bslib)
 
 ui <- page_navbar(
-  title = "Vélib Dashboard",
-  theme = bs_theme(bootswatch = "flatly"),
-  
+  title    = "Vélib Dashboard",
+  theme    = bs_theme(bootswatch = "flatly"),
+  fillable = TRUE,
+
   nav_panel("🗺️ Global view",     mod_overview_ui("overview")),
   # nav_panel("📍 Par Station",     mod_station_ui("station")),
   # nav_panel("⏱️ Historical station status",mod_temporal_ui("temporal")),

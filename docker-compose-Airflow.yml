@@ -58,6 +58,9 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - default
+      - idfm_network
       
   redis:
     image: redis:7.2-bookworm
