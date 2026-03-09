@@ -27,6 +27,10 @@ dbt/logs/
 /superset/.cache/
 /superset/.local/
 
+# Shiny
+/shiny/app/app_cache/
+
+
 # handeling 
 __pycache__/
 *.py[cod]

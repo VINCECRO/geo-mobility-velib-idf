@@ -9,15 +9,15 @@ x-airflow-common: &airflow-common
     TZ: Europe/Paris
     AIRFLOW__CORE__EXECUTOR: CeleryExecutor
     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
-    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres-airflow:5432/airflow
-    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres-airflow:5432/airflow
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_DAG_USER}:${POSTGRES_DAG_PASSWORD}@${POSTGRES_DAG_HOST}:${POSTGRES_DAG_PORT}/${POSTGRES_DAG_DB}
+    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://${POSTGRES_DAG_USER}:${POSTGRES_DAG_PASSWORD}@${POSTGRES_DAG_HOST}:${POSTGRES_DAG_PORT}/${POSTGRES_DAG_DB}
     AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
     AIRFLOW__CORE__FERNET_KEY: ''
     AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW_JWT_SECRET}
     AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
     AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://airflow-apiserver:8080/execution/'
     AIRFLOW__VELIB_DB_CONN:
-      postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+      postgresql+psycopg2://${POSTGIS_VELIB_USER}:${POSTGIS_VELIB_PASSWORD}@${POSTGIS_VELIB_HOST}:${POSTGIS_VELIB_PORT}/${POSTGIS_VELIB_DB}
     PYTHONPATH: /opt/airflow:/opt/airflow/extract_Velib_API:/opt/airflow/ingest_Velib_API
     DBT_PROFILES_DIR: /opt/airflow/dbt
     DBT_PROJECT_DIR: /opt/airflow/dbt
@@ -46,15 +46,15 @@ services:
     image: postgres:13
     container_name: airflow-postgres
     environment:
-      POSTGRES_DB: airflow
-      POSTGRES_USER: airflow
-      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: ${POSTGRES_DAG_DB}
+      POSTGRES_USER: ${POSTGRES_DAG_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_DAG_PASSWORD}
     ports:
       - "5433:5432"
     volumes:
       - airflow-pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U airflow"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_DAG_USER}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -184,12 +184,12 @@ services:
     env_file:
     - .env
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGIS_VELIB_DB}
+      POSTGRES_USER: ${POSTGIS_VELIB_USER}
+      POSTGRES_PASSWORD: ${POSTGIS_VELIB_PASSWORD}
       PYTHONPATH: /additional_assets
     ports:
-      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+      - ${POSTGIS_VELIB_PORT}:${POSTGIS_VELIB_PORT}
     volumes:
       - velib-pgdata:/var/lib/postgresql/data
       - ./postgis/init_script:/docker-entrypoint-initdb.d
@@ -198,7 +198,7 @@ services:
       - default
       - idfm_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGIS_VELIB_USER} -d ${POSTGIS_VELIB_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -213,12 +213,8 @@ services:
     volumes:
       - ./postgis/additional_assets:/app
     working_dir: /app
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_HOST: postgres-velib
-      POSTGRES_PORT: ${POSTGRES_PORT}
+    env_file:
+    - .env
 
 volumes:
   airflow-pgdata:

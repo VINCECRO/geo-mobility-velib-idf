@@ -23,19 +23,34 @@ source("modules/mod_overview.R")
 # source("modules/mod_geo.R")
 source("modules/mod_sql_explorer.R")
 
-# --- Pool de connexions PostGIS ---
-pool <- dbPool(
+# --- Principal Velib database ---
+pool_velib <- dbPool(
   drv      = Postgres(),
-  host     = Sys.getenv("POSTGRES_HOST",    "postgres-velib"),
-  port     = as.integer(Sys.getenv("POSTGRES_PORT", "5432")),
-  dbname   = Sys.getenv("POSTGRES_DB",      "velib_DB"),
-  user     = Sys.getenv("POSTGRES_USER",    "velib"),
-  password = Sys.getenv("POSTGRES_PASSWORD","velib_password"),
+  host     = Sys.getenv("POSTGIS_VELIB_HOST"),
+  port     = as.integer(Sys.getenv("POSTGIS_VELIB_PORT")),
+  dbname   = Sys.getenv("POSTGIS_VELIB_DB"),
+  user     = Sys.getenv("POSTGIS_VELIB_USER"),
+  password = Sys.getenv("POSTGIS_VELIB_PASSWORD"),
   minSize  = 2,
   maxSize  = 10
 )
 
-onStop(function() poolClose(pool))
+# --- Dag database ---
+pool_dag <- dbPool(
+  drv      = Postgres(),
+  host     = Sys.getenv("POSTGRES_DAG_HOST"),
+  port     = as.integer(Sys.getenv("POSTGRES_DAG_PORT")),
+  dbname   = Sys.getenv("POSTGRES_DAG_DB"),
+  user     = Sys.getenv("POSTGRES_DAG_USER"),
+  password = Sys.getenv("POSTGRES_DAG_PASSWORD"),
+  minSize  = 2,
+  maxSize  = 10
+)
+
+onStop(function() {
+  poolClose(pool_velib)
+  poolClose(pool_idfm)
+})
 
 # --- Helper requête ---
 query <- function(sql) {
