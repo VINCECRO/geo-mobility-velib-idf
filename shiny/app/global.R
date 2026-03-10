@@ -22,7 +22,7 @@ library(scales)
 source("modules/mod_overview.R")
 # source("modules/mod_station.R")
 # source("modules/mod_temporal.R")
-# source("modules/mod_geo.R")
+source("modules/mod_geo.R")
 source("modules/mod_sql_explorer.R")
 
 # --- Principal Velib database ---

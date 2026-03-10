@@ -87,15 +87,13 @@ server <- function(input, output, session) {
   # )
 
   # ===========================================================================
-  # MODULE : CARTE
+  # MODULE : CARTE COMMUNAL
   # Leaflet avec état en temps réel par station
   # ===========================================================================
 
-  # mod_geo_server("geo",
-  #   pool         = pool,
-  #   stations     = stations,
-  #   last_snapshot = last_snapshot
-  # )
+  mod_geo_server("geo",
+    pool         = pool_velib
+  )
 
   # ===========================================================================
   # MODULE : SQL explorer for Velib Data & Dag data
