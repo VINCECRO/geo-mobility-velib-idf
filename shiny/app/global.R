@@ -1,5 +1,7 @@
 # global.R — Chargé une seule fois au démarrage du serveur Shiny
 
+Sys.setenv(TZ = "Europe/Paris")
+
 library(shiny)
 library(bslib)
 library(bsicons)
@@ -52,7 +54,23 @@ onStop(function() {
   poolClose(pool_dag)
 })
 
-# --- Helper requête ---
-query <- function(pool,sql) {
-  dbGetQuery(pool, sql)
+# --- SQL request function ---
+# Define function to ease query
+query <- function(pool, sql, params = NULL) {
+  df           <- dbGetQuery(pool, sql, params = params)
+  posixct_cols <- vapply(df, inherits, logical(1), what = "POSIXct")
+  df[posixct_cols] <- lapply(df[posixct_cols], lubridate::with_tz, tzone = "Europe/Paris")
+  df
 }
+
+# --- Palettes de couleurs (miroir des variables CSS) ---
+COLORS <- list(
+  # Binaire
+  binary  = c(ok = "#2ecc71", critical = "#e74c3c"),
+
+  # Quartiles Q1 (bon) → Q4 (mauvais)
+  quartile = c("#e74c3c","#e67e22", "#f1c40f" , "#2ecc71"),
+
+  # Linéaire bas → haut
+  linear  = c(low = "#e74c3c", mid = "#f39c12", high = "#2ecc71")
+)

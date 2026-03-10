@@ -1,0 +1,28 @@
+/* ── Palette de couleurs ─────────────────────── */
+:root {
+  /* Binaire */
+  --color-ok:       #2ecc71;
+  --color-critical: #e74c3c;
+
+  /* Quartiles (Q1=bon → Q4=mauvais) */
+  --color-q1: #e74c3c;
+  --color-q2: #e67e22;
+  --color-q3: #f1c40f;
+  --color-q4: #2ecc71;
+
+  /* Linéaire */
+  --color-low:  #e74c3c;
+  --color-mid:  #f39c12;
+  --color-high: #2ecc71;
+}
+
+/* ── Base responsive ─────────────────────────── */
+html { font-size: clamp(13px, 1vw, 16px); }
+
+/* ── Typography ──────────────────────────────── */
+.card-header        { font-size: 0.85rem; }
+.dataTables_wrapper { font-size: 0.8rem; }
+
+/* règles spécifiques à un module via classe custom */
+/* .mod-sql .card-header    { font-size: 0.75rem; font-family: monospace; }*/
+/* .mod-overview .value-box { font-size: 1.2rem; }*/

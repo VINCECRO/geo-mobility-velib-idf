@@ -10,11 +10,11 @@ library(glue)
 server <- function(input, output, session) {
 
   # ===========================================================================
-  # DONNÉES RÉACTIVES GLOBALES
-  # Chargées une fois au démarrage, rafraîchissables
+  # Global Data
+  #
   # ===========================================================================
 
-  # Toutes les stations actives (dim_station current_validity = TRUE)
+  # Active stations
   stations <- reactive({
     query(pool_velib,"
       SELECT
@@ -33,21 +33,21 @@ server <- function(input, output, session) {
       WHERE current_validity = TRUE
       ORDER BY station_name
     ")
-  }) %>% bindCache("stations_dim")  # cache statique, peu changeant
+  }) %>% bindCache("stations_dim")  # cache statique
 
-  # Dernier snapshot disponible dans fct_station_availability
+  # Define last snapshot
   last_snapshot <- reactive({
     query(pool_velib,"SELECT MAX(extracted_at) AS ts FROM marts.fct_station_availability") %>%
       pull(ts)
   })
 
-  # Mise à jour du timestamp affiché dans la navbar
+  # Last recorded timestamp print in navbar
   output$last_update <- renderText({
     ts <- last_snapshot()
-    paste("Dernier snapshot :", format(ts, "%d/%m/%Y %H:%M"))
+    paste("Last snapshot :", format(ts, "%d/%m/%Y %H:%M"))
   })
 
-  # Invalider les données réactives toutes les 5 minutes
+  # Update every 5 minutes
   autoInvalidate <- reactiveTimer(300000)
   observe({
     autoInvalidate()
@@ -56,8 +56,8 @@ server <- function(input, output, session) {
   })
 
   # ===========================================================================
-  # MODULE : VUE GLOBALE
-  # KPIs agrégés sur le dernier snapshot
+  # MODULE : Global View
+  # KPIs agregate over last snapshot
   # ===========================================================================
 
   mod_overview_server("overview",
@@ -98,7 +98,7 @@ server <- function(input, output, session) {
   # )
 
   # ===========================================================================
-  # MODULE : EXPLORATEUR SQL
+  # MODULE : SQL explorer for Velib Data & Dag data
   # ===========================================================================
 
   mod_sql_explorer_server("sql", pool_velib = pool_velib, pool_dag = pool_dag)

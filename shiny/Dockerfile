@@ -1,6 +1,9 @@
 FROM rocker/shiny:4.4.2
 
+ENV TZ=Europe/Paris
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    tzdata \
     libpq-dev \
     libgdal-dev \
     libgeos-dev \

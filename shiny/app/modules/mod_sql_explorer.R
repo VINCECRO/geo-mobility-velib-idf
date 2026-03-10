@@ -3,36 +3,33 @@
 mod_sql_explorer_ui <- function(id) {
   ns <- NS(id)
   tagList(
-    layout_columns(
-      col_widths = c(12),
-      card(
-        fill       = FALSE,
-        height     = "500px",        # hauteur fixe sur la card elle-même
-        card_header("Explorateur SQL"),
-        # Éditeur de requête
+    card(
+      card_header("SQL explorer"),
+        # request editor
         tags$textarea(
           id = ns("query_input"),
           class = "form-control font-monospace",
-          style = "height: 200px; font-size: 13px;",
-          placeholder = "SELECT * FROM fct_station_availability LIMIT 100;"
+          style = "height: 15vh; font-size: 13px;",
+          placeholder = "SELECT * FROM marts.fct_station_availability LIMIT 100;"
         ),
-        # Sélecteur de base + boutons
+        # DB selection + action button
         layout_columns(
-          col_widths = c(3, 2, 2, 5),
-          selectInput(ns("db_choice"), "Base de données",
+          height     = "15vh",
+          col_widths = c(3, -5, 2, 2),
+          selectInput(ns("db_choice"), "Select Database",
             choices = c("Velib (PostGIS)" = "velib", "Airflow DAG" = "dag")
           ),
-          actionButton(ns("run"), "▶ Exécuter", class = "btn-primary"),
-          actionButton(ns("clear"), "✕ Effacer"),
-          uiOutput(ns("query_info"))   # temps d'exécution, nb lignes
+          actionButton(ns("run"), "▶ Run", class = "btn-primary"),
+          actionButton(ns("clear"), "✕ Erase")
         )
-      )
     ),
     card(
-      fill       = FALSE,           # s'étend pour remplir l'espace restant
-      min_height = "200px",
-      card_header("Résultats"),
-      # Table résultats
+      height = "50vh",
+      card_header(
+      class = "d-flex justify-content-between",
+      "Result",
+      uiOutput(ns("query_info"))),
+      # Table résultats , 
       DTOutput(ns("result_table")),
       # Zone erreur
       uiOutput(ns("error_msg"))
@@ -54,10 +51,10 @@ mod_sql_explorer_server <- function(id, pool_velib, pool_dag) {
       sql <- trimws(input$query_input)
       req(nchar(sql) > 0)
 
-      # Sécurité minimale : bloquer les écritures
+      # Improve security and prevent DB alteration
       keywords_interdits <- c("INSERT", "UPDATE", "DELETE", "DROP", "TRUNCATE", "ALTER", "CREATE")
       if (any(sapply(keywords_interdits, function(k) grepl(k, toupper(sql))))) {
-        error("Seules les requêtes SELECT sont autorisées.")
+        error("Ony SELECT request are allowed")
         result(NULL)
         return()
       }
@@ -67,7 +64,7 @@ mod_sql_explorer_server <- function(id, pool_velib, pool_dag) {
 
       tryCatch({
         df <- dbGetQuery(active_pool(), sql)
-        elapsed <- round((proc.time() - t0)["elapsed"], 2)
+        elapsed <- round((proc.time() - t0)["elapsed"], 2)  
         result(list(data = df, time = elapsed, nrow = nrow(df)))
       }, error = function(e) {
         error(conditionMessage(e))
@@ -85,8 +82,7 @@ mod_sql_explorer_server <- function(id, pool_velib, pool_dag) {
       req(result())
       datatable(
         result()$data,
-        options = list(scrollX = TRUE, pageLength = 25),
-        filter  = "top"
+        options = list(scrollX = TRUE, pageLength = 25, dom = 'pti'),
       )
     })
     
@@ -94,7 +90,7 @@ mod_sql_explorer_server <- function(id, pool_velib, pool_dag) {
       req(result())
       tags$span(
         class = "text-muted",
-        glue::glue("✓ {result()$nrow} lignes — {result()$time}s")
+        glue::glue("✓ {result()$nrow} lines — {result()$time}s")
       )
     })
     

@@ -70,6 +70,9 @@ restart-all: # Stop Airflow & Shiny
 shell-airflow:
 	$(DC_AIRFLOW) exec airflow-worker bash
 
+shell-postgis:
+	$(DC_AIRFLOW) exec postgres-velib bash
+
 shell-superset:
 	$(DC_SUPERSET) exec superset bash
 
