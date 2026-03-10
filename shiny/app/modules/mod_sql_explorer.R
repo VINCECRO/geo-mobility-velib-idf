@@ -63,8 +63,8 @@ mod_sql_explorer_server <- function(id, pool_velib, pool_dag) {
       t0 <- proc.time()
 
       tryCatch({
-        df <- dbGetQuery(active_pool(), sql)
-        elapsed <- round((proc.time() - t0)["elapsed"], 2)  
+        df      <- query(active_pool(), sql)
+        elapsed <- round((proc.time() - t0)["elapsed"], 2)
         result(list(data = df, time = elapsed, nrow = nrow(df)))
       }, error = function(e) {
         error(conditionMessage(e))
@@ -80,10 +80,10 @@ mod_sql_explorer_server <- function(id, pool_velib, pool_dag) {
     
     output$result_table <- renderDT({
       req(result())
-      datatable(
-        result()$data,
-        options = list(scrollX = TRUE, pageLength = 25, dom = 'pti'),
-      )
+      df           <- result()$data
+      posixct_cols <- vapply(df, inherits, logical(1), what = "POSIXct")
+      df[posixct_cols] <- lapply(df[posixct_cols], format, format = "%Y-%m-%d %H:%M:%S")
+      datatable(df, options = list(scrollX = TRUE, pageLength = 25, dom = 'pti'))
     })
     
     output$query_info <- renderUI({
