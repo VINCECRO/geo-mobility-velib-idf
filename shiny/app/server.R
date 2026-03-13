@@ -107,4 +107,6 @@ server <- function(input, output, session) {
   mod_dag_server("dag", pool = pool_dag)
 
   mod_sql_explorer_server("sql", pool_velib = pool_velib, pool_dag = pool_dag)
+
+  mod_agent_server("agent")
 }

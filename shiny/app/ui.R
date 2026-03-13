@@ -4,7 +4,10 @@ ui <- page_navbar(
   title    = "Vélib Dashboard",
   theme    = bs_theme(bootswatch = "flatly"),
   fillable = "🗺️ Global view",
-  tags$head(tags$link(rel = "stylesheet", href = "styles.css")),
+  header   = tagList(
+    tags$head(tags$link(rel = "stylesheet", href = "styles.css")),
+    useShinyjs()
+  ),
 
   nav_panel("🗺️ Global view",     mod_overview_ui("overview")),
   # nav_panel("📍 Par Station",     mod_station_ui("station")),
@@ -12,6 +15,7 @@ ui <- page_navbar(
   nav_panel("🗾  Situation per commune",  mod_geo_ui("geo")),
   nav_panel("⚙️ DAG Monitoring",         mod_dag_ui("dag")),
   nav_panel("🔍 Explorateur SQL", mod_sql_explorer_ui("sql")),
+  nav_panel("🤖 Agent",           mod_agent_ui("agent")),
   
   nav_spacer(),
   # Def

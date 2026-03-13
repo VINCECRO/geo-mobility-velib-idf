@@ -31,6 +31,7 @@ RUN R -e "install.packages('glue',         repos='https://cloud.r-project.org')"
 RUN R -e "install.packages('scales',       repos='https://cloud.r-project.org')"
 # Couches problématiques — binaires Posit pour éviter la compilation
 RUN R -e "install.packages(c('sf','leaflet'), repos='https://packagemanager.posit.co/cran/__linux__/noble/latest')"
+RUN R -e "install.packages(c('httr2','shinyjs'), repos='https://cloud.r-project.org')"
 
 
 COPY app/ /srv/shiny-server/app/

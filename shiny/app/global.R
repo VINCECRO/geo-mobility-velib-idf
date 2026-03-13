@@ -17,6 +17,8 @@ library(sf)
 library(DT)
 library(glue)
 library(scales)
+library(httr2)
+library(shinyjs)
 
 # --- Source des modules AVANT que ui.R et server.R soient chargés ---
 # geo/ : sous-fichiers (_*.R) sourcés avant l'orchestrateur (ordre alphabétique garanti)
@@ -33,6 +35,7 @@ source("modules/dag/_snapshot.R")
 source("modules/dag/_kpis.R")
 source("modules/dag/_waffle.R")
 source("modules/dag/mod_dag.R")
+source("modules/agent/mod_agent.R")
 # source("modules/mod_station.R")
 # source("modules/mod_temporal.R")
 

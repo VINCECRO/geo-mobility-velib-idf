@@ -1,0 +1,21 @@
+services:
+  agent-api:
+    build:
+      context: ./agent
+      dockerfile: Dockerfile
+    container_name: agent-api
+    env_file:
+      - .env
+    environment:
+      POSTGIS_VELIB_HOST: postgres-velib
+      POSTGIS_VELIB_PORT: 5432
+    ports:
+      - "8002:8000"
+    networks:
+      - idfm_network
+    restart: unless-stopped
+
+networks:
+  idfm_network:
+    external: true
+    name: idfm_network
