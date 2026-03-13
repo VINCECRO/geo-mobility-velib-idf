@@ -99,5 +99,12 @@ server <- function(input, output, session) {
   # MODULE : SQL explorer for Velib Data & Dag data
   # ===========================================================================
 
+  # ===========================================================================
+  # MODULE : DAG MONITORING
+  # Waffle chart des dag runs (historique ou date spécifique)
+  # ===========================================================================
+
+  mod_dag_server("dag", pool = pool_dag)
+
   mod_sql_explorer_server("sql", pool_velib = pool_velib, pool_dag = pool_dag)
 }

@@ -10,6 +10,7 @@ ui <- page_navbar(
   # nav_panel("📍 Par Station",     mod_station_ui("station")),
   # nav_panel("⏱️ Historical station status",mod_temporal_ui("temporal")),
   nav_panel("🗾  Situation per commune",  mod_geo_ui("geo")),
+  nav_panel("⚙️ DAG Monitoring",         mod_dag_ui("dag")),
   nav_panel("🔍 Explorateur SQL", mod_sql_explorer_ui("sql")),
   
   nav_spacer(),

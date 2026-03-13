@@ -28,6 +28,11 @@ source("modules/geo/mod_geo.R")
 
 source("modules/overview/mod_overview.R")
 source("modules/sql_explorer/mod_sql_explorer.R")
+
+source("modules/dag/_snapshot.R")
+source("modules/dag/_kpis.R")
+source("modules/dag/_waffle.R")
+source("modules/dag/mod_dag.R")
 # source("modules/mod_station.R")
 # source("modules/mod_temporal.R")
 
