@@ -19,11 +19,17 @@ library(glue)
 library(scales)
 
 # --- Source des modules AVANT que ui.R et server.R soient chargés ---
-source("modules/mod_overview.R")
+# geo/ : sous-fichiers (_*.R) sourcés avant l'orchestrateur (ordre alphabétique garanti)
+source("modules/geo/_snapshot.R")
+source("modules/geo/_kpis.R")
+source("modules/geo/_map.R")
+source("modules/geo/_chart.R")
+source("modules/geo/mod_geo.R")
+
+source("modules/overview/mod_overview.R")
+source("modules/sql_explorer/mod_sql_explorer.R")
 # source("modules/mod_station.R")
 # source("modules/mod_temporal.R")
-source("modules/mod_geo.R")
-source("modules/mod_sql_explorer.R")
 
 # --- Principal Velib database ---
 pool_velib <- dbPool(
