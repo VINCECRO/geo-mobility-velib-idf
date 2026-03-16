@@ -262,6 +262,16 @@ The platform is designed to answer questions such as:
 │       ├── communes_Idf.gpkg
 │       └── pop_commune_Idf.gpkg
 │
+├── computing_geoassets/
+│   ├── reducting_pop_to_idf.py          # Clip Meta HRPD population to IDF communes
+│   ├── generating_pop_data.py           # Population GeoDataFrame builder
+│   └── Geospatial_clustering.py         # BDNB + population → KMeans clustering (roadmap)
+│   # Data sources:
+│   #   - Meta High Resolution Population Density (HRPD), 30m grid
+│   #     https://data.humdata.org/dataset/france-high-resolution-population-density-maps-demographic-estimates
+│   # ⚠️ Derived files (pop_pointwise_idf) not committed due to size.
+│   #    Scripts above fully reproduce them from the original sources.
+│
 ├── docker-compose-Airflow.yml
 ├── docker-compose-Shiny.yml
 ├── docker-compose-Agent.yml
