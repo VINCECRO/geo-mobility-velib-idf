@@ -109,7 +109,8 @@ enriched_data AS (
         CASE
             WHEN EXTRACT(HOUR FROM de.extracted_at) BETWEEN 7  AND 9  THEN 'Morning Rush'
             WHEN EXTRACT(HOUR FROM de.extracted_at) BETWEEN 17 AND 19 THEN 'Evening Rush'
-            WHEN EXTRACT(HOUR FROM de.extracted_at) BETWEEN 22 AND 6  THEN 'Night'
+            WHEN EXTRACT(HOUR FROM de.extracted_at) >= 22
+            OR EXTRACT(HOUR FROM de.extracted_at) <  6               THEN 'Night'
             ELSE 'Off-Peak'
         END AS time_period,
 
