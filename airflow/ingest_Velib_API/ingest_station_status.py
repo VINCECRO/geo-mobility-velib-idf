@@ -60,7 +60,7 @@ def insert_station_status(conn: connection, stations_status: List[StationDict]) 
 
         # Final Log
         logger.info(
-            f"✓ Processed {len(stations)} stations: "
+            f"✓ Processed {len(stations)} stations"
         )
         
 
