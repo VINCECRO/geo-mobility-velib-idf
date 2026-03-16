@@ -19,7 +19,7 @@
 
 <!-- SCREENSHOT 2 : Commune-level geo module (Leaflet + time series chart) -->
 <!-- Suggested filename : screenshot_geo.png -->
-![Commune analysis — station map and availability time series](img/screenshot_geo.png)
+![Commune analysis — station map and availability time series](https://raw.githubusercontent.com/VINCECRO/geo-mobility-velib-idf/main/img/screenshot_geo.png)
 
 <!-- SCREENSHOT 3 : DAG monitoring (waffle chart) -->
 <!-- Suggested filename : screenshot_dag.png -->
