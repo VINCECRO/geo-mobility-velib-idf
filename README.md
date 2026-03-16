@@ -15,19 +15,19 @@
 
 <!-- SCREENSHOT 1 : Global view dashboard (KPI cards + Leaflet map) -->
 <!-- Suggested filename : screenshot_overview.png -->
-![Global view — network KPIs and station map](docs/screenshot_overview.png)
+![Global view — network KPIs and station map](img/screenshot_overview.png)
 
 <!-- SCREENSHOT 2 : Commune-level geo module (Leaflet + time series chart) -->
 <!-- Suggested filename : screenshot_geo.png -->
-![Commune analysis — station map and availability time series](docs/screenshot_geo.png)
+![Commune analysis — station map and availability time series](img/screenshot_geo.png)
 
 <!-- SCREENSHOT 3 : DAG monitoring (waffle chart) -->
 <!-- Suggested filename : screenshot_dag.png -->
-![DAG monitoring — Airflow run history](docs/screenshot_dag.png)
+![DAG monitoring — Airflow run history](img/screenshot_dag.png)
 
 <!-- SCREENSHOT 4 : LLM Agent chat (question + SQL block in response) -->
 <!-- Suggested filename : screenshot_agent.png -->
-![LLM Agent — natural language query with auto-generated SQL](docs/screenshot_agent.png)
+![LLM Agent — natural language query with auto-generated SQL](img/screenshot_agent.png)
 
 ---
 
