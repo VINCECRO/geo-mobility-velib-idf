@@ -31,6 +31,9 @@ dbt/logs/
 # Shiny
 /shiny/app/app_cache/
 
+# Superset (not currently used)
+/superset/
+
 
 # handeling 
 __pycache__/
