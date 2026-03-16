@@ -1,5 +1,5 @@
 # superset/superset_config.py
-# Configuration personnalisée pour Superset avec PostGIS
+# Custom Superset configuration with PostGIS
 
 import os
 
@@ -7,10 +7,10 @@ import os
 ROW_LIMIT = 5000
 SUPERSET_WEBSERVER_PORT = 8088
 
-# Flask Secret Key - CHANGEZ CETTE VALEUR EN PRODUCTION
+# Flask Secret Key - CHANGE THIS VALUE IN PRODUCTION
 SECRET_KEY = os.environ.get("SUPERSET_SECRET_KEY", "change-this-to-a-long-random-string")
 
-# SQLAlchemy Database URI pour les métadonnées Superset
+# SQLAlchemy Database URI for Superset metadata
 SQLALCHEMY_DATABASE_URI = (
     f"postgresql://{os.environ.get('DATABASE_USER', 'superset')}:"
     f"{os.environ.get('DATABASE_PASSWORD', 'superset')}@"
@@ -19,7 +19,7 @@ SQLALCHEMY_DATABASE_URI = (
     f"{os.environ.get('DATABASE_DB', 'superset')}"
 )
 
-# Configuration Redis pour cache
+# Redis configuration for caching
 REDIS_HOST = os.environ.get("REDIS_HOST", "redis-superset")
 REDIS_PORT = os.environ.get("REDIS_PORT", "6379")
 
@@ -39,25 +39,25 @@ DATA_CACHE_CONFIG = {
     'CACHE_REDIS_PORT': REDIS_PORT,
 }
 
-# Mapbox API Key (optionnel - pour de belles cartes
+# Mapbox API Key (optional - for nice maps
 MAPBOX_API_KEY = os.environ.get("MAPBOX_API_KEY", "")
 
-# Feature flags pour activer les fonctionnalités géospatiales
+# Feature flags to enable geospatial features
 FEATURE_FLAGS = {
     "ENABLE_TEMPLATE_PROCESSING": True,
     "DASHBOARD_NATIVE_FILTERS": True,
     "DASHBOARD_CROSS_FILTERS": True,
     "DASHBOARD_VIRTUALIZATION": True,
-    "GLOBAL_ASYNC_QUERIES": False,  # Désactivé temporairement
+    "GLOBAL_ASYNC_QUERIES": False,  # Temporarily disabled
     "VERSIONED_EXPORT": True,
     "ENABLE_EXPLORE_DRAG_AND_DROP": True,
 }
 
-# Configuration pour permettre les iframes (si vous voulez embarquer Superset)
+# Configuration to allow iframes (if you want to embed Superset)
 TALISMAN_ENABLED = False
 WTF_CSRF_ENABLED = False
 
-# Timeout pour les requêtes SQL
+# SQL query timeout
 SUPERSET_WEBSERVER_TIMEOUT = 300
 
 # Logging

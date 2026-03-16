@@ -1,12 +1,12 @@
 # geo/_snapshot.R
 # Snapshot selection: date picker, AM/PM filter, time slider, timestamp resolution
 #
-# Architecture :
+# Architecture:
 #   available_timestamps() → data.frame(ts_sql, ts_label)
-#     ts_sql   : string exacte issue de PostgreSQL (to_char) → injectée telle quelle dans WHERE
-#     ts_label : "HH:MM" en Europe/Paris → affiché sur le slider
+#     ts_sql   : exact string from PostgreSQL (to_char) → injected as-is into WHERE
+#     ts_label : "HH:MM" in Europe/Paris → displayed on the slider
 #
-# Plus de round-trip POSIXct → string → pas d'erreur de précision virgule flottante.
+# No more POSIXct → string round-trip → no floating-point precision errors.
 
 filter_by_ampm <- function(ts_df, ampm) {
   hours <- as.integer(substr(ts_df$ts_label, 1, 2))
@@ -15,7 +15,7 @@ filter_by_ampm <- function(ts_df, ampm) {
 
 geo_snapshot_server <- function(input, output, session, pool) {
 
-  # Retourne data.frame(ts_sql, ts_label) pour le jour sélectionné
+  # Returns data.frame(ts_sql, ts_label) for the selected day
   available_timestamps <- reactive({
     req(isTRUE(input$use_custom_ts), input$ts_date)
     query(pool, glue("
@@ -133,7 +133,7 @@ geo_snapshot_server <- function(input, output, session, pool) {
     }
   })
 
-  # Retourne la string ts_sql exacte (issue de PostgreSQL) pour le timestamp sélectionné
+  # Returns the exact ts_sql string (from PostgreSQL) for the selected timestamp
   selected_ts <- reactive({
     if (!isTRUE(input$use_custom_ts)) return(NULL)
     req(input$ts_date, input$ts_ampm, input$ts_index)
@@ -144,7 +144,7 @@ geo_snapshot_server <- function(input, output, session, pool) {
     filtered$ts_sql[idx[1]]
   })
 
-  # Clause WHERE injectée telle quelle — ts_sql est la représentation exacte de PostgreSQL
+  # WHERE clause injected as-is — ts_sql is the exact PostgreSQL representation
   ts_filter <- reactive({
     ts_sql <- selected_ts()
     if (is.null(ts_sql)) {

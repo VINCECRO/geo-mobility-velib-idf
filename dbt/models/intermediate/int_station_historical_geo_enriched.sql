@@ -16,12 +16,12 @@ SELECT
     s.valid_to,
     s.current_validity,
 
-    -- Commune contenant la station à cette version
+    -- Municipality containing the station at this version
     c.nomcom AS commune_name,
     c.insee   AS commune_code,
     c.numdep AS department_number,
     
-    -- Population de cette commune
+    -- Population of this municipality
     p.population AS commune_population
 
 FROM {{ ref('stg_velib_station_historical') }} s

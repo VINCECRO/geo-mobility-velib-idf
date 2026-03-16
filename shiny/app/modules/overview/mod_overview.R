@@ -1,12 +1,12 @@
 # modules/mod_overview.R
-# Dashboard vue globale : KPIs réseau sur le dernier snapshot
+# Global view dashboard: network KPIs over the latest snapshot
 
 mod_overview_ui <- function(id) {
   ns <- NS(id)
   layout_columns(
     col_widths = c(5, 7),
 
-    # --- Colonne gauche : 6 KPI cards en 3x2 ---
+    # --- Left column: 6 KPI cards in 3x2 ---
     layout_columns(
       col_widths = c(6, 6),
       value_box(
@@ -47,7 +47,7 @@ mod_overview_ui <- function(id) {
       )
     ),
 
-    # --- Colonne droite : carte Paris ---
+    # --- Right column: Paris map ---
     card(
       card_header(
         div(
@@ -77,7 +77,7 @@ mod_overview_ui <- function(id) {
 mod_overview_server <- function(id, pool, last_snapshot, stations) {
   moduleServer(id, function(input, output, session) {
 
-    # Données agrégées sur le dernier snapshot
+    # Aggregated data over the latest snapshot
     snapshot_data <- reactive({
       req(last_snapshot())
       query(pool, "
@@ -131,7 +131,7 @@ mod_overview_server <- function(id, pool, last_snapshot, stations) {
       paste0(round(mean(snapshot_data()$dock_availability_rate, na.rm = TRUE), 1), "%")
     })
 
-    # --- Carte Paris ---
+    # --- Paris map ---
     output$map_stations <- renderLeaflet({
       df <- snapshot_data()
       req(df)
@@ -145,7 +145,7 @@ mod_overview_server <- function(id, pool, last_snapshot, stations) {
         )
     })
 
-    # Labels des KPIs (valeur → label affiché)
+    # KPI labels (value → display label)
     kpi_labels <- c(
       "num_bikes_available"  = "Available bikes",
       "ebikes_available"     = "Electrical bikes",
@@ -156,7 +156,7 @@ mod_overview_server <- function(id, pool, last_snapshot, stations) {
       "is_dock_critical"     = "Critical dock availability"
     )
 
-    # KPIs binaires vs continus
+    # Binary vs continuous KPIs
     kpi_binary     <- c("is_critical","is_bike_critical","is_dock_critical")
     kpi_continuous <- c("num_bikes_available", "ebikes_available", "mechanical_available", "num_docks_available")
 
@@ -167,8 +167,7 @@ mod_overview_server <- function(id, pool, last_snapshot, stations) {
 
       vals      <- df[[kpi]]
       kpi_label <- kpi_labels[[kpi]]
-    # Define color scale and legend
-      # --- Couleur, rayon et légende selon le type de KPI ---
+      # Define color scale and legend based on KPI type
       if (kpi %in% kpi_binary) {
         colors        <- ifelse(vals, COLORS$binary["critical"], COLORS$binary["ok"])
         radius        <- 4
@@ -209,7 +208,7 @@ mod_overview_server <- function(id, pool, last_snapshot, stations) {
         addCircleMarkers(
           data        = df,
           lng         = ~longitude,
-          lat         = ~latitude,  
+          lat         = ~latitude,
           radius      = radius,
           color       = ~marker_color,
           fillOpacity = 1,

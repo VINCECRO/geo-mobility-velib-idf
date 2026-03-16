@@ -15,9 +15,9 @@ WITH comparison AS (
         COALESCE({{ column_a }}, 0) - COALESCE({{ column_b }}, 0) AS difference
     FROM {{ model }}
     WHERE 
-        -- Valeurs différentes
+        -- Different values
         {{ column_a }} IS DISTINCT FROM {{ column_b }}
-        -- Au-delà de la tolérance
+        -- Beyond tolerance
         AND ABS(COALESCE({{ column_a }}, 0) - COALESCE({{ column_b }}, 0)) > {{ tolerance }}
 )
 

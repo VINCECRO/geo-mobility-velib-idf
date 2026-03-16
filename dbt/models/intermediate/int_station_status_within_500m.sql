@@ -59,7 +59,7 @@ JOIN stations_lambert n
     AND st.extracted_at >= n.valid_from
     AND (n.valid_to IS NULL OR st.extracted_at < n.valid_to)
 
--- Statut de la station voisine au même instant
+-- Neighbor station status at the same instant
 JOIN {{ ref('stg_velib_station_status') }} st_n
     ON  st_n.station_id   = n.station_id
     AND st_n.extracted_at = st.extracted_at

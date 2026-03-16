@@ -1,7 +1,7 @@
 # dag/_snapshot.R
-# Filtre de date pour le dashboard DAG
+# Date filter for the DAG dashboard
 #
-# Retourne: selected_date() — NULL (tout l'historique) ou "YYYY-MM-DD"
+# Returns: selected_date() — NULL (full history) or "YYYY-MM-DD"
 
 dag_snapshot_server <- function(input, output, session, pool) {
 
@@ -17,7 +17,7 @@ dag_snapshot_server <- function(input, output, session, pool) {
       tags$div(class = "mt-2"),
       dateInput(
         session$ns("selected_date"),
-        label  = tags$span(bsicons::bs_icon("calendar3"), " Sélectionner une date"),
+        label  = tags$span(bsicons::bs_icon("calendar3"), " Select a date"),
         value  = as.character(date_range$max_date),
         min    = as.character(date_range$min_date),
         max    = as.character(date_range$max_date),
@@ -30,7 +30,7 @@ dag_snapshot_server <- function(input, output, session, pool) {
   output$snapshot_info <- renderUI({
     if (!isTRUE(input$use_custom_date)) {
       tags$div(class = "text-muted mt-2", style = "font-size: 0.78rem;",
-               bsicons::bs_icon("info-circle"), " Tout l'historique affiché.")
+               bsicons::bs_icon("info-circle"), " Showing full history.")
     } else {
       req(input$selected_date)
       tags$div(class = "text-info mt-2", style = "font-size: 0.78rem;",

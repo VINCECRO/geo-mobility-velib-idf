@@ -42,7 +42,7 @@ WITH source_data AS (
     {% endif %}
 ),
 
--- Enrichissement statique depuis dim_station (version SCD2 courante)
+-- Static enrichment from dim_station (current SCD2 version)
 dim_enriched AS (
     SELECT
         sd.*,
@@ -66,18 +66,18 @@ enriched_data AS (
     SELECT
         de.*,
 
-        -- Disponibilité des voisines au même snapshot (depuis int_station_status_within_500m)
+        -- Neighbor availability at the same snapshot (from int_station_status_within_500m)
         COALESCE(nb.neighbor_bikes_available_500m, 0)       AS neighbor_bikes_available_500m,
         COALESCE(nb.neighbor_mechanical_available_500m, 0)  AS neighbor_mechanical_available_500m,
         COALESCE(nb.neighbor_ebikes_available_500m, 0)      AS neighbor_ebikes_available_500m,
         COALESCE(nb.neighbor_docks_available_500m, 0)       AS neighbor_docks_available_500m,
         COALESCE(nb.neighbor_station_count_500m, 0)         AS neighbor_station_count_500m,
 
-        -- Totaux accessibles (station propre + voisines)
+        -- Accessible totals (own station + neighbors)
         de.num_bikes_available + COALESCE(nb.neighbor_bikes_available_500m, 0) AS total_bikes_accessible_500m,
         de.num_docks_available + COALESCE(nb.neighbor_docks_available_500m, 0) AS total_docks_accessible_500m,
 
-        -- KPIs station propre
+        -- Own station KPIs
         CASE
             WHEN de.capacity > 0
             THEN de.num_bikes_available::NUMERIC / de.capacity * 100
@@ -90,7 +90,7 @@ enriched_data AS (
             ELSE 0
         END AS dock_availability_rate,
 
-        -- Flags état critique
+        -- Critical state flags
         CASE WHEN de.num_bikes_available < de.capacity * 0.1 THEN true ELSE false END AS is_bike_critical,
         CASE WHEN de.num_docks_available < de.capacity * 0.1 THEN true ELSE false END AS is_dock_critical,
         CASE
@@ -99,7 +99,7 @@ enriched_data AS (
             THEN true ELSE false
         END AS is_critical,
 
-        -- Enrichissement temporel
+        -- Temporal enrichment
         EXTRACT(DOW FROM de.extracted_at) AS day_of_week,
         TO_CHAR(de.extracted_at, 'Day')   AS day_name,
         CASE
@@ -113,7 +113,7 @@ enriched_data AS (
             ELSE 'Off-Peak'
         END AS time_period,
 
-        -- Flag opérationnel
+        -- Operational flag
         CASE
             WHEN de.is_installed = 1
              AND de.is_renting   = 1
@@ -128,12 +128,12 @@ enriched_data AS (
 )
 
 SELECT
-    -- Clés
+    -- Keys
     station_id,
     extracted_at,
     day_date,
 
-    -- Identifiants
+    -- Identifiers
     station_code,
     station_name,
 
@@ -141,46 +141,46 @@ SELECT
     last_reported_at,
     hour_of_day,
 
-    -- Disponibilité station propre
+    -- Own station availability
     num_bikes_available,
     mechanical_available,
     ebikes_available,
     num_docks_available,
     capacity,
 
-    -- Disponibilité voisines 500m (même snapshot)
+    -- 500m neighbor availability (same snapshot)
     neighbor_bikes_available_500m,
     neighbor_mechanical_available_500m,
     neighbor_ebikes_available_500m,
     neighbor_docks_available_500m,
     neighbor_station_count_500m,
 
-    -- Totaux accessibles (station + voisines)
+    -- Accessible totals (station + neighbors)
     total_bikes_accessible_500m,
     total_docks_accessible_500m,
 
-    -- KPIs calculés
+    -- Computed KPIs
     ROUND(availability_rate, 2)      AS availability_rate,
     ROUND(dock_availability_rate, 2) AS dock_availability_rate,
 
-    -- Flags état
+    -- State flags
     is_bike_critical,
     is_dock_critical,
     is_critical,
     is_fully_operational,
 
-    -- États opérationnels
+    -- Operational states
     is_installed,
     is_renting,
     is_returning,
 
-    -- Enrichissement temporel
+    -- Temporal enrichment
     day_of_week,
     day_name,
     day_type,
     time_period,
 
-    -- Enrichissement géographique (statique)
+    -- Geographic enrichment (static)
     commune_name,
     commune_code,
     commune_population,
@@ -190,7 +190,7 @@ SELECT
     station_size_category,
     geometry,
 
-    -- Métadonnées
+    -- Metadata
     rental_methods,
 
     -- Audit

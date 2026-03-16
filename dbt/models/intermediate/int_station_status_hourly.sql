@@ -12,7 +12,7 @@ WITH hourly_slots AS (
         station_id,
         DATE_TRUNC('hour', extracted_at) AS hour_slot,
         
-        -- Agrégations
+        -- Aggregations
         COUNT(*) AS snapshot_count,
         AVG(num_bikes_available) AS avg_bikes_available,
         MIN(num_bikes_available) AS min_bikes_available,
@@ -59,7 +59,7 @@ WITH hourly_slots AS (
         -- Timestamps
         MIN(extracted_at) AS first_snapshot_at,
         MAX(extracted_at) AS last_snapshot_at,
-        MAX(capacity) AS capacity  -- Assume stable dans l'heure
+        MAX(capacity) AS capacity  -- Assumed stable within the hour
         
     FROM {{ ref('int_station_status_with_capacity') }}
     GROUP BY 
@@ -73,7 +73,7 @@ SELECT
     hour_slot,
     snapshot_count,
     
-    -- Métriques de disponibilité
+    -- Availability metrics
     ROUND(avg_bikes_available, 1) AS avg_bikes_available,
     min_bikes_available,
     max_bikes_available,
@@ -86,18 +86,18 @@ SELECT
     ROUND(critical_bike_availability_rate * 100, 2) AS critical_bike_time_pct,
     
     ROUND(critical_dock_availability_rate * 100, 2) AS critical_dock_time_pct,
-    -- Métadonnées
+    -- Metadata
     first_snapshot_at,
     last_snapshot_at,
     capacity,
     
-    -- Flag : heure complète ou partielle ?
-    CASE 
-        WHEN snapshot_count >= 10 THEN true  -- Au moins 10 snapshots (50 min)
+    -- Flag: complete or partial hour?
+    CASE
+        WHEN snapshot_count >= 10 THEN true  -- At least 10 snapshots (50 min)
         ELSE false 
     END AS is_complete_hour,
     
-    -- Enrichissement temporel
+    -- Temporal enrichment
     EXTRACT(HOUR FROM hour_slot) AS hour_of_day,
     EXTRACT(DOW FROM hour_slot) AS day_of_week,
     CASE 

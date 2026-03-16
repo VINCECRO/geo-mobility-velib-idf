@@ -1,14 +1,14 @@
 """
 MCP Server — Vélib PostGIS database (read-only).
 
-Expose deux primitives MCP :
-  - tool    : query_velib(sql)  → exécute un SELECT sur la base PostGIS
-  - resource: schema://velib    → schéma annoté des tables marts
+Exposes two MCP primitives:
+  - tool    : query_velib(sql)  → executes a SELECT on the PostGIS database
+  - resource: schema://velib    → annotated schema of the marts tables
 
-Usage (stdio, lancé par l'agent) :
+Usage (stdio, launched by the agent):
     python velib_mcp_server.py
 
-Variables d'environnement requises :
+Required environment variables:
     POSTGIS_VELIB_HOST
     POSTGIS_VELIB_PORT
     POSTGIS_VELIB_DB
@@ -27,7 +27,7 @@ from fastmcp import FastMCP
 mcp = FastMCP("velib-db")
 
 # ---------------------------------------------------------------------------
-# Connexion
+# Connection
 # ---------------------------------------------------------------------------
 
 def _get_conn() -> psycopg2.extensions.connection:
@@ -42,7 +42,7 @@ def _get_conn() -> psycopg2.extensions.connection:
 
 
 # ---------------------------------------------------------------------------
-# Guard SQL : SELECT only, LIMIT obligatoire
+# SQL guard: SELECT only, LIMIT required
 # ---------------------------------------------------------------------------
 
 _FORBIDDEN = re.compile(
@@ -53,39 +53,39 @@ _SENSITIVE_TABLES = re.compile(r"\b(ab_user|ab_role|ab_permission)\b", re.IGNORE
 
 
 def _validate(sql: str) -> str | None:
-    """Retourne un message d'erreur si la requête est invalide, None sinon."""
+    """Returns an error message if the query is invalid, None otherwise."""
     if m := _FORBIDDEN.search(sql):
-        return f"Mot-clé interdit '{m.group()}' — uniquement SELECT."
+        return f"Forbidden keyword '{m.group()}' — SELECT only."
     if _SENSITIVE_TABLES.search(sql):
-        return "Accès refusé à cette table."
+        return "Access denied to this table."
     if "LIMIT" not in sql.upper():
-        return "La requête doit inclure une clause LIMIT (max conseillé : 100)."
+        return "Query must include a LIMIT clause (recommended max: 100)."
     return None
 
 
 # ---------------------------------------------------------------------------
-# Tool : query_velib
+# Tool: query_velib
 # ---------------------------------------------------------------------------
 
 @mcp.tool()
 def query_velib(sql: str) -> str:
     """
-    Exécute une requête SQL SELECT en lecture seule sur la base Vélib PostGIS.
+    Execute a read-only SQL SELECT query on the Vélib PostGIS database.
 
-    Règles :
-    - SELECT uniquement — pas de DML ni DDL.
-    - Doit inclure une clause LIMIT.
-    - Les géométries sont en EPSG:4326.
-    - Fuseau horaire de la base : Europe/Paris.
-    - Schéma principal : marts  (dim_station, fct_station_availability)
+    Rules:
+    - SELECT only — no DML or DDL.
+    - Must include a LIMIT clause.
+    - Geometries are in EPSG:4326.
+    - Database timezone: Europe/Paris.
+    - Main schema: marts  (dim_station, fct_station_availability)
 
-    Avant d'écrire une requête, lire la ressource 'schema://velib' pour
-    comprendre le grain, les jointures SCD2, et les règles métier.
+    Before writing a query, read the 'schema://velib' resource to
+    understand the grain, SCD2 joins, and business rules.
 
-    Retourne : tableau JSON (liste de dicts) ou message d'erreur.
+    Returns: JSON array (list of dicts) or error message.
     """
     if err := _validate(sql):
-        return f"Erreur de validation SQL : {err}"
+        return f"SQL validation error: {err}"
 
     try:
         conn = _get_conn()
@@ -95,113 +95,113 @@ def query_velib(sql: str) -> str:
             rows = cur.fetchall()
         conn.close()
     except psycopg2.OperationalError as e:
-        return f"Erreur de connexion : {e}"
+        return f"Connection error: {e}"
     except psycopg2.Error as e:
-        return f"Erreur base de données : {e.pgerror or str(e)}"
+        return f"Database error: {e.pgerror or str(e)}"
 
     if not rows:
-        return "La requête a retourné 0 lignes."
+        return "Query returned 0 rows."
 
     return json.dumps([dict(r) for r in rows], default=str, ensure_ascii=False, indent=2)
 
 
 # ---------------------------------------------------------------------------
-# Resource : schema://velib
+# Resource: schema://velib
 # ---------------------------------------------------------------------------
 
 @mcp.resource("schema://velib")
 def velib_schema() -> str:
     """
-    Schéma complet de la base Vélib avec annotations métier.
-    À lire AVANT d'écrire toute requête SQL.
+    Full Vélib database schema with business annotations.
+    Read this BEFORE writing any SQL query.
     """
     return """
-# Schéma Vélib — couche marts
+# Vélib Schema — marts layer
 
-## marts.dim_station  —  métadonnées des stations (SCD Type 2)
+## marts.dim_station  —  station metadata (SCD Type 2)
 
-Grain : une ligne par (station_id, valid_from) — historique complet des changements.
+Grain: one row per (station_id, valid_from) — full history of changes.
 
-⚠️  JOINTURES SCD2
-    État courant uniquement :
+⚠️  SCD2 JOINS
+    Current state only:
         WHERE current_validity = TRUE
-    Jointure temporelle avec fct_station_availability :
+    Temporal join with fct_station_availability:
         ON  f.station_id = d.station_id
         AND f.extracted_at BETWEEN d.valid_from AND COALESCE(d.valid_to, NOW())
 
-Colonnes clés :
-    station_id                TEXT         Clé naturelle (API Vélib)
-    station_code              TEXT         Code court
-    station_name              TEXT         Nom lisible
-    capacity                  INT          Nombre total de places
+Key columns:
+    station_id                TEXT         Natural key (Vélib API)
+    station_code              TEXT         Short code
+    station_name              TEXT         Human-readable name
+    capacity                  INT          Total number of docks
     station_size_category     TEXT         'Q1-Small' | 'Q2-Medium' | 'Q3-Large' | 'Q4-XLarge'
     geometry                  GEOMETRY     Point EPSG:4326 (lon, lat)
-    commune_name              TEXT         Commune (IDF)
-    commune_code              TEXT         Code INSEE
-    commune_population        INT          Population de la commune
-    department_number         TEXT         ex. '75', '92', '93'
-    population_500m           FLOAT        Population estimée dans un rayon 500m (grille Meta 30m)
+    commune_name              TEXT         Municipality (IDF)
+    commune_code              TEXT         INSEE code
+    commune_population        INT          Municipality population
+    department_number         TEXT         e.g. '75', '92', '93'
+    population_500m           FLOAT        Estimated population within 500m radius (Meta 30m grid)
     local_population_per_bike FLOAT        population_500m / capacity
     population_density_500m   TEXT         'Peripheral' | 'Suburban' | 'Urban' | 'Urban Core'
-    rental_methods            TEXT[]       Tableau de méthodes de paiement acceptées
-    valid_from                TIMESTAMPTZ  Début de validité SCD2
-    valid_to                  TIMESTAMPTZ  Fin de validité SCD2 (NULL si version courante)
-    current_validity          BOOLEAN      TRUE = version active
+    rental_methods            TEXT[]       Array of accepted payment methods
+    valid_from                TIMESTAMPTZ  SCD2 validity start
+    valid_to                  TIMESTAMPTZ  SCD2 validity end (NULL if current version)
+    current_validity          BOOLEAN      TRUE = active version
 
 
-## marts.fct_station_availability  —  snapshots de disponibilité
+## marts.fct_station_availability  —  availability snapshots
 
-Grain : une ligne par (station_id, extracted_at) — snapshot toutes les ~5 minutes.
-Volume : ~1 400 stations × 288 snapshots/jour ≈ 400 000 lignes/jour.
+Grain: one row per (station_id, extracted_at) — snapshot every ~5 minutes.
+Volume: ~1,400 stations × 288 snapshots/day ≈ 400,000 rows/day.
 
-⚠️  AGRÉGATION
-    Ne jamais faire COUNT(*) sans GROUP BY sur une plage temporelle.
-    Pour une heure : AVG(availability_rate) GROUP BY station_id, hour_of_day.
+⚠️  AGGREGATION
+    Never COUNT(*) without GROUP BY over a time range.
+    For hourly stats: AVG(availability_rate) GROUP BY station_id, hour_of_day.
 
-Colonnes clés :
+Key columns:
     station_id                      TEXT
-    extracted_at                    TIMESTAMPTZ  Timestamp du snapshot (Europe/Paris)
+    extracted_at                    TIMESTAMPTZ  Snapshot timestamp (Europe/Paris)
     day_date                        DATE
     hour_of_day                     INT          0–23
     station_name                    TEXT
     last_reported_at                TIMESTAMPTZ
 
-    -- Disponibilité station
+    -- Station availability
     num_bikes_available             INT
     mechanical_available            INT
     ebikes_available                INT
     num_docks_available             INT
     capacity                        INT
 
-    -- Voisines dans un rayon 500m (même snapshot)
+    -- Neighbors within 500m radius (same snapshot)
     neighbor_bikes_available_500m   INT
     neighbor_docks_available_500m   INT
     neighbor_station_count_500m     INT
-    total_bikes_accessible_500m     INT          station + voisines
+    total_bikes_accessible_500m     INT          station + neighbors
     total_docks_accessible_500m     INT
 
-    -- KPIs (0 à 100)
+    -- KPIs (0 to 100)
     availability_rate               NUMERIC      num_bikes / capacity × 100
     dock_availability_rate          NUMERIC      num_docks / capacity × 100
 
-    -- Flags critique (seuil : < 10% de la capacité)
+    -- Critical flags (threshold: < 10% of capacity)
     is_bike_critical                BOOLEAN
     is_dock_critical                BOOLEAN
-    is_critical                     BOOLEAN      bike OU dock critique
+    is_critical                     BOOLEAN      bike OR dock critical
 
-    -- État opérationnel
-    is_fully_operational            BOOLEAN      installée ET louant ET restituant
+    -- Operational state
+    is_fully_operational            BOOLEAN      installed AND renting AND returning
     is_installed                    INT          1 / 0
     is_renting                      INT          1 / 0
     is_returning                    INT          1 / 0
 
-    -- Enrichissement temporel
-    day_of_week                     INT          0 = Dimanche … 6 = Samedi
+    -- Temporal enrichment
+    day_of_week                     INT          0 = Sunday … 6 = Saturday
     day_name                        TEXT         'Monday' etc.
     day_type                        TEXT         'Weekday' | 'Weekend'
     time_period                     TEXT         'Morning Rush'(7-9h) | 'Evening Rush'(17-19h) | 'Night' | 'Off-Peak'
 
-    -- Géographie (dénormalisé depuis dim_station version courante)
+    -- Geography (denormalized from current dim_station version)
     commune_name                    TEXT
     commune_code                    TEXT
     department_number               TEXT
@@ -211,12 +211,12 @@ Colonnes clés :
     geometry                        GEOMETRY     EPSG:4326
 
 
-## Patterns de requêtes courants
+## Common query patterns
 
--- Dernier snapshot disponible
+-- Latest available snapshot
 SELECT MAX(extracted_at) FROM marts.fct_station_availability;
 
--- Stations critiques au dernier snapshot
+-- Critical stations at the latest snapshot
 SELECT station_name, commune_name, availability_rate
 FROM marts.fct_station_availability
 WHERE extracted_at = (SELECT MAX(extracted_at) FROM marts.fct_station_availability)
@@ -224,7 +224,7 @@ WHERE extracted_at = (SELECT MAX(extracted_at) FROM marts.fct_station_availabili
 ORDER BY availability_rate ASC
 LIMIT 20;
 
--- Disponibilité moyenne par heure sur 7 jours
+-- Average availability by hour over 7 days
 SELECT day_date, hour_of_day, ROUND(AVG(availability_rate), 1) AS avg_avail
 FROM marts.fct_station_availability
 WHERE extracted_at >= NOW() - INTERVAL '7 days'
@@ -232,11 +232,11 @@ GROUP BY day_date, hour_of_day
 ORDER BY day_date, hour_of_day
 LIMIT 200;
 
--- Classement des communes par disponibilité (snapshot courant)
+-- Municipality ranking by availability (current snapshot)
 SELECT commune_name,
        COUNT(*)                          AS nb_stations,
        ROUND(AVG(availability_rate), 1)  AS avg_avail,
-       SUM(CASE WHEN is_critical THEN 1 ELSE 0 END) AS nb_critiques
+       SUM(CASE WHEN is_critical THEN 1 ELSE 0 END) AS nb_critical
 FROM marts.fct_station_availability
 WHERE extracted_at = (SELECT MAX(extracted_at) FROM marts.fct_station_availability)
 GROUP BY commune_name
@@ -246,7 +246,7 @@ LIMIT 20;
 
 
 # ---------------------------------------------------------------------------
-# Entrée
+# Entry point
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":

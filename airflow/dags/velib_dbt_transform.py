@@ -14,11 +14,11 @@ DBT_DIR = "/opt/airflow/dbt"
 
 
 def get_latest_ingestion_time(dt):
-    """Cherche l'ingestion la plus récente terminée"""
+    """Finds the most recent completed ingestion"""
     minutes = (dt.minute // 5) * 5
     target_time = dt.replace(minute=minutes, second=0, microsecond=0)
 
-    # Si on tombe pile sur un cycle, recule de 5 min
+    # If exactly on a cycle boundary, step back 5 min
     if dt.minute % 5 == 0:
         target_time = target_time - timedelta(minutes=5)
 
@@ -27,12 +27,12 @@ def get_latest_ingestion_time(dt):
 
 def run_dbt_with_check(**context):
     """
-    Lance dbt run et analyse la sortie.
+    Runs dbt run and analyses the output.
 
-    Comportements :
-      - Tout OK           → succès (vert)
-      - Erreurs partielles → AirflowSkipException (orange)
-      - Tout échoue        → AirflowException (rouge)
+    Behaviour:
+      - All OK            → success (green)
+      - Partial errors    → AirflowSkipException (orange)
+      - All fail          → AirflowException (red)
     """
     logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ def run_dbt_with_check(**context):
         text=True
     )
 
-    # Log complet dans le journal Airflow
+    # Full log in the Airflow journal
     logger.info("=== DBT RUN OUTPUT ===")
     for line in result.stdout.splitlines():
         logger.info(line)
@@ -61,36 +61,36 @@ def run_dbt_with_check(**context):
 
     stdout = result.stdout
 
-    # --- Parser la ligne de résumé dbt ---
-    # Exemple de sortie dbt : "Done. PASS=5 WARN=1 ERROR=2 SKIP=0 TOTAL=8"
+    # --- Parse the dbt summary line ---
+    # Example dbt output: "Done. PASS=5 WARN=1 ERROR=2 SKIP=0 TOTAL=8"
     pass_count  = int(re.search(r'PASS=(\d+)',  stdout).group(1)) if re.search(r'PASS=(\d+)',  stdout) else 0
     error_count = int(re.search(r'ERROR=(\d+)', stdout).group(1)) if re.search(r'ERROR=(\d+)', stdout) else 0
     warn_count  = int(re.search(r'WARN=(\d+)',  stdout).group(1)) if re.search(r'WARN=(\d+)',  stdout) else 0
     skip_count  = int(re.search(r'SKIP=(\d+)',  stdout).group(1)) if re.search(r'SKIP=(\d+)',  stdout) else 0
 
     logger.info("")
-    logger.info(f"📊 Résumé dbt run → PASS={pass_count} | ERROR={error_count} | WARN={warn_count} | SKIP={skip_count}")
+    logger.info(f"📊 dbt run summary → PASS={pass_count} | ERROR={error_count} | WARN={warn_count} | SKIP={skip_count}")
     logger.info("")
 
-    # ❌ Tous les modèles ont échoué → tâche ROUGE
+    # ❌ All models failed → RED task
     if error_count > 0 and pass_count == 0:
         raise AirflowException(
-            f"❌ DBT RUN FAILED : {error_count} modèle(s) en erreur, "
-            f"aucun modèle n'a été chargé. Vérifiez les logs dbt."
+            f"❌ DBT RUN FAILED: {error_count} model(s) in error, "
+            f"no model was loaded. Check the dbt logs."
         )
 
-    # 🟠 Erreurs partielles → tâche ORANGE
+    # 🟠 Partial errors → ORANGE task
     if error_count > 0:
         raise AirflowSkipException(
-            f"⚠️ DBT RUN PARTIEL : {pass_count} modèle(s) OK / {error_count} erreur(s) / "
-            f"{skip_count} skipped. Certains modèles n'ont pas été transformés !"
+            f"⚠️ DBT RUN PARTIAL: {pass_count} model(s) OK / {error_count} error(s) / "
+            f"{skip_count} skipped. Some models were not transformed!"
         )
 
-    # 🟠 Warnings uniquement → tâche ORANGE
+    # 🟠 Warnings only → ORANGE task
     if warn_count > 0:
         raise AirflowSkipException(
-            f"⚠️ DBT RUN avec warnings : {pass_count} modèle(s) OK / {warn_count} warning(s). "
-            f"Vérifiez la qualité des données."
+            f"⚠️ DBT RUN with warnings: {pass_count} model(s) OK / {warn_count} warning(s). "
+            f"Check data quality."
         )
 
     logger.info("")
@@ -98,17 +98,17 @@ def run_dbt_with_check(**context):
     logger.info("║                   DBT RUN - COMPLETED                         ║")
     logger.info("╚═══════════════════════════════════════════════════════════════╝")
     logger.info("")
-    logger.info(f"✅ DBT RUN SUCCESS : {pass_count} modèle(s) transformés avec succès.")
+    logger.info(f"✅ DBT RUN SUCCESS: {pass_count} model(s) successfully transformed.")
 
 
 def run_dbt_test_with_check(**context):
     """
-    Lance dbt test et analyse la sortie.
+    Runs dbt test and analyses the output.
 
-    Comportements :
-      - Tout OK          → succès (vert)
-      - Tests échoués    → AirflowSkipException (orange)
-      - Erreur critique  → AirflowException (rouge)
+    Behaviour:
+      - All OK           → success (green)
+      - Failed tests     → AirflowSkipException (orange)
+      - Critical error   → AirflowException (red)
     """
     logger = logging.getLogger(__name__)
 
@@ -125,7 +125,7 @@ def run_dbt_test_with_check(**context):
         text=True
     )
 
-    # Log complet dans le journal Airflow
+    # Full log in the Airflow journal
     logger.info("=== DBT TEST OUTPUT ===")
     for line in result.stdout.splitlines():
         logger.info(line)
@@ -143,21 +143,21 @@ def run_dbt_test_with_check(**context):
     warn_count  = int(re.search(r'WARN=(\d+)',  stdout).group(1)) if re.search(r'WARN=(\d+)',  stdout) else 0
 
     logger.info("")
-    logger.info(f"📊 Résumé dbt test → PASS={pass_count} | FAIL={fail_count} | ERROR={error_count} | WARN={warn_count}")
+    logger.info(f"📊 dbt test summary → PASS={pass_count} | FAIL={fail_count} | ERROR={error_count} | WARN={warn_count}")
     logger.info("")
 
-    # ❌ Erreur critique (ex: connexion DB perdue) → tâche ROUGE
+    # ❌ Critical error (e.g. lost DB connection) → RED task
     if error_count > 0 and pass_count == 0 and fail_count == 0:
         raise AirflowException(
-            f"❌ DBT TEST ERROR CRITIQUE : {error_count} erreur(s) d'exécution. "
-            f"Les tests n'ont pas pu s'exécuter."
+            f"❌ DBT TEST CRITICAL ERROR: {error_count} execution error(s). "
+            f"Tests could not run."
         )
 
-    # 🟠 Tests échoués → tâche ORANGE
+    # 🟠 Failed tests → ORANGE task
     if fail_count > 0 or error_count > 0:
         raise AirflowSkipException(
-            f"⚠️ DBT TEST : {fail_count} test(s) échoué(s) / {error_count} erreur(s) / "
-            f"{pass_count} OK. La qualité des données n'est pas garantie !"
+            f"⚠️ DBT TEST: {fail_count} test(s) failed / {error_count} error(s) / "
+            f"{pass_count} OK. Data quality is not guaranteed!"
         )
 
     logger.info("")
@@ -165,7 +165,7 @@ def run_dbt_test_with_check(**context):
     logger.info("║                   DBT TEST - COMPLETED                        ║")
     logger.info("╚═══════════════════════════════════════════════════════════════╝")
     logger.info("")
-    logger.info(f"✅ DBT TEST SUCCESS : {pass_count} test(s) passés avec succès.")
+    logger.info(f"✅ DBT TEST SUCCESS: {pass_count} test(s) passed successfully.")
 
 
 with DAG(

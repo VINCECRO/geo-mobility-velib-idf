@@ -1,5 +1,5 @@
 # modules/agent/mod_agent.R
-# Interface de chat pour interroger l'agent LLM Vélib via l'API FastAPI.
+# Chat interface to query the Vélib LLM agent via the FastAPI endpoint.
 
 AGENT_API_URL <- Sys.getenv("AGENT_API_URL", unset = "http://agent-api:8000")
 
@@ -12,12 +12,12 @@ mod_agent_ui <- function(id) {
   tagList(
     layout_columns(
       col_widths = c(8, 4),
-      # --- Colonne gauche : conversation ---
+      # --- Left column: conversation ---
       card(
         full_screen = TRUE,
-        card_header("Agent Vélib — Questions en langage naturel"),
+        card_header("Vélib Agent — Natural language queries"),
         card_body(
-          # Historique de la conversation
+          # Conversation history
           div(
             id = ns("chat_box"),
             style = "height: 55vh; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; padding: 0.5rem;",
@@ -31,25 +31,25 @@ mod_agent_ui <- function(id) {
               ns("question"),
               label    = NULL,
               value    = "",
-              placeholder = "Ex : Quelles communes ont le plus de stations critiques ?"
+              placeholder = "e.g. Which municipalities have the most critical stations?"
             ),
-            actionButton(ns("send"), "Envoyer", class = "btn-primary w-100")
+            actionButton(ns("send"), "Send", class = "btn-primary w-100")
           )
         )
       ),
 
-      # --- Colonne droite : suggestions ---
+      # --- Right column: suggestions ---
       card(
         card_header("Suggestions"),
         card_body(
-          p(class = "text-muted small", "Cliquez sur une question pour la charger."),
+          p(class = "text-muted small", "Click a question to load it."),
           div(
             class = "d-flex flex-column gap-2",
-            actionLink(ns("q1"), "🔴 Quelles communes ont le plus de stations critiques en ce moment ?"),
-            actionLink(ns("q2"), "📊 Quelle est la disponibilité moyenne par arrondissement ?"),
-            actionLink(ns("q3"), "⏱️ À quelle heure la disponibilité est-elle la plus faible en semaine ?"),
-            actionLink(ns("q4"), "🚲 Quelles stations ont le taux de vélos électriques le plus élevé ?"),
-            actionLink(ns("q5"), "🏙️ Comparez la disponibilité entre zones urbaines denses et périphériques.")
+            actionLink(ns("q1"), "\U0001f534 Which municipalities have the most critical stations right now?"),
+            actionLink(ns("q2"), "\U0001f4ca What is the average availability per district at the last snapshot?"),
+            actionLink(ns("q3"), "\U23f1\ufe0f At what hour is availability lowest on weekdays?"),
+            actionLink(ns("q4"), "\U0001f6b2 Which stations have the highest e-bike ratio?"),
+            actionLink(ns("q5"), "\U0001f3d9\ufe0f Compare availability between Urban Core and Peripheral zones.")
           )
         )
       )
@@ -65,40 +65,41 @@ mod_agent_server <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
-    # Historique : liste de list(role, content)
+    # History: list of list(role, content)
     history <- reactiveVal(list())
     loading  <- reactiveVal(FALSE)
 
-    # Suggestions → pré-remplit l'input
+    # Suggestions → pre-fill the input
     suggestions <- list(
-      q1 = "Quelles communes ont le plus de stations critiques en ce moment ?",
-      q2 = "Quelle est la disponibilité moyenne par arrondissement au dernier snapshot ?",
-      q3 = "À quelle heure la disponibilité est-elle la plus faible en semaine sur les 7 derniers jours ?",
-      q4 = "Quelles sont les 10 stations avec le taux de vélos électriques le plus élevé ?",
-      q5 = "Comparez la disponibilité moyenne entre zones Urban Core et Peripheral."
+      q1 = "Which municipalities have the most critical stations right now?",
+      q2 = "What is the average availability per district at the last snapshot?",
+      q3 = "At what hour is availability lowest on weekdays over the last 7 days?",
+      q4 = "What are the 10 stations with the highest e-bike ratio?",
+      q5 = "Compare average availability between Urban Core and Peripheral zones."
     )
 
     for (qid in names(suggestions)) {
       local({
-        question_text <- suggestions[[qid]]
-        observeEvent(input[[qid]], {
+        .qid          <- qid
+        question_text <- suggestions[[.qid]]
+        observeEvent(input[[.qid]], {
           updateTextInput(session, "question", value = question_text)
         })
       })
     }
 
-    # Envoi d'une question
+    # Send a question
     observeEvent(input$send, {
       question <- trimws(input$question)
       req(nchar(question) > 0)
       req(!loading())
 
-      # Ajoute la question à l'historique et vide l'input
+      # Add question to history and clear input
       history(c(history(), list(list(role = "user", content = question))))
       updateTextInput(session, "question", value = "")
       loading(TRUE)
 
-      # Appel HTTP à l'API agent
+      # HTTP call to the agent API
       answer <- tryCatch({
         resp <- httr2::request(AGENT_API_URL) |>
           httr2::req_url_path_append("ask") |>
@@ -107,21 +108,21 @@ mod_agent_server <- function(id) {
           httr2::req_perform()
         httr2::resp_body_json(resp)$answer
       }, error = function(e) {
-        paste0("**Erreur :** ", conditionMessage(e))
+        paste0("**Error:** ", conditionMessage(e))
       })
 
       history(c(history(), list(list(role = "assistant", content = answer))))
       loading(FALSE)
     })
 
-    # Rendu de l'historique
+    # Render conversation history
     output$chat_history <- renderUI({
       msgs <- history()
 
       if (length(msgs) == 0) {
         return(div(
           class = "text-muted text-center mt-5",
-          "Posez une question sur les données Vélib..."
+          "Ask a question about the Vélib data..."
         ))
       }
 
@@ -141,21 +142,20 @@ mod_agent_server <- function(id) {
             style = "max-width: 95%;",
             div(
               class = "bg-light border rounded p-2 px-3 small",
-              # Rendu Markdown basique via shiny::markdown()
               shiny::markdown(m$content)
             )
           )
         }
       })
 
-      # Indicateur de chargement
+      # Loading indicator
       if (loading()) {
         bubbles <- c(bubbles, list(
           div(
             class = "align-self-start",
             div(
               class = "bg-light border rounded p-2 px-3 text-muted small fst-italic",
-              "L'agent réfléchit..."
+              "Agent is thinking..."
             )
           )
         ))
@@ -164,7 +164,7 @@ mod_agent_server <- function(id) {
       tagList(bubbles)
     })
 
-    # Scroll automatique vers le bas après chaque message
+    # Auto-scroll to bottom after each message
     observe({
       history()
       loading()

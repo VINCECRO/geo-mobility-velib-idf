@@ -19,7 +19,7 @@ geo_chart_server <- function(input, output, session, timeseries_data, selected_s
     radioGroupButtons(
       session$ns("chart_view"),
       label    = NULL,
-      choices  = c("Global" = "global", "Journ\u00e9e" = "daily"),
+      choices  = c("Global" = "global", "Daily" = "daily"),
       selected = "global",
       size     = "sm"
     )

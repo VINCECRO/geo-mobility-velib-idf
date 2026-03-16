@@ -61,9 +61,9 @@ def aggregate_on_grid_batch(gdf_grid, gdf_population, bat_complet, buffer_distan
     results = []
     n = len(gdf_grid)
     for start in range(0, n, batch_size):
-        print(f"Traitement batch {start//batch_size + 1} / {n//batch_size + 1}")
+        print(f"Processing batch {start//batch_size + 1} / {n//batch_size + 1}")
         batch = gdf_grid.iloc[start:start + batch_size].copy()
-        # Centroïde and buffers
+        # Centroids and buffers
         centroids = batch.geometry.centroid
         buffers = centroids.buffer(buffer_distance)
         gdf_buffers = gpd.GeoDataFrame(
@@ -96,7 +96,7 @@ def aggregate_on_grid_batch(gdf_grid, gdf_population, bat_complet, buffer_distan
                 predicate="intersects"
             )
             bat_agg = joined_bat.groupby("id")[usage_cols].sum().reset_index()
-        # --- Assemblage du batch via left join ---
+        # --- Assemble batch via left join ---
         batch = batch.merge(pop_agg, on="id", how="left") if pop_agg is not None else batch.assign(population_totale=0.0)
         batch = batch.merge(bat_agg, on="id", how="left") if bat_agg is not None else batch.assign(**{col: 0.0 for col in usage_cols})
         batch[["population_totale"] + usage_cols] = batch[["population_totale"] + usage_cols].fillna(0.0)
@@ -108,7 +108,7 @@ def aggregate_on_grid_batch(gdf_grid, gdf_population, bat_complet, buffer_distan
 #---------------------------
 def prepare_features(gdf):
     df = gdf.copy()
-    # Surface bâtie totale (hors nan et annexe qui sont du bruit)
+    # Total built surface (excluding nan and annex which are noise)
     usage_cols = ["usage_Résidentiel", "usage_Commercial et services", 
                   "usage_Industriel", "usage_Sportif", "usage_Religieux",
                   "usage_Indifférencié", "usage_Agricole"]
@@ -131,7 +131,7 @@ def clustering(gdf,n_clusters=4):
     # KMeans
     kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
     df["cluster"] = kmeans.fit_predict(X_scaled)
-    # Aide à l'interprétation : profil moyen de chaque cluster
+    # Interpretation helper: average profile per cluster
     profil = df.groupby("cluster")[feature_cols].mean().round(3)
     print(profil)
     return df, profil
@@ -154,7 +154,7 @@ if __name__ == "__main__":
     # Loarding grind data 
     gdf_50m=gpd.read_file('./input_data/grille_50m_SCR_2154.gpkg')
     gdf_50m=gdf_50m[["id","geometry"]]
-    # aggrgation with centroïd buffer
+    # Aggregation with centroid buffer
     gdf_50m_enrichi = aggregate_on_grid_batch(gdf_grid=gdf_50m,gdf_population=Population,bat_complet=bat_complet,buffer_distance=500)
     vmin, vmax = gdf_50m_enrichi["population_totale"].min(), gdf_50m_enrichi["population_totale"].max()  #
     norm = mcolors.Normalize(vmin=0, vmax=5000)
@@ -162,7 +162,7 @@ if __name__ == "__main__":
     fig, ax = plt.subplots(figsize=(15, 15))
     gdf_50m_enrichi.plot(ax=ax, cmap=cmap, norm=norm,column='population_totale',alpha=0.7,edgecolor=None)
     sm = cm.ScalarMappable(cmap=cmap, norm=norm)
-    sm.set_array([])  # Obligatoire pour éviter une erreur
+    sm.set_array([])  # Required to avoid an error
     cbar = fig.colorbar(sm, ax=ax)
     cbar.set_label("Population")
     ax.set_xlabel("Longitude")

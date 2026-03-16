@@ -16,9 +16,9 @@
 
 /*
 Granularity    : historical data of stations
-Natural key    : station_id + valid_from + valid_to (historique complet)
+Natural key    : station_id + valid_from + valid_to (full history)
 
-Enrichissements :
+Enrichments:
 - geographical (Zip code + commune) + commune population: int_station_historical_geo_enriched (SCD2-aware, grain station_id + valid_from
 - Population 500m                   : int_station_pop_500m     (SCD2-aware, grain station_id + valid_from)
 - Operationnal                      : caracterization with quartile population and capacity
@@ -59,14 +59,14 @@ geo_enriched AS (
         pop.population_500m,
         pop.pop_point_count_500m,
 
-        -- Ratio population locale 500m / capacité
+        -- Local 500m population / capacity ratio
         CASE
             WHEN pop.population_500m > 0 AND g.capacity > 0
             THEN pop.population_500m::NUMERIC / g.capacity
             ELSE NULL
         END AS local_population_per_bike,
 
-        -- Catégorie de taille : comparaison de la capacité aux seuils actuels
+        -- Size category: capacity compared to current thresholds
         CASE
             WHEN g.capacity <= ct.q1_capacity THEN 'Q1-Small'
             WHEN g.capacity <= ct.q2_capacity THEN 'Q2-Medium'
@@ -74,7 +74,7 @@ geo_enriched AS (
             ELSE 'Q4-XLarge'
         END AS station_size_category,
 
-        -- Densité de population : comparaison de population_500m aux seuils actuels
+        -- Population density: population_500m compared to current thresholds
         CASE
             WHEN pop.population_500m <= pt.q1_population THEN 'Peripheral'
             WHEN pop.population_500m <= pt.q2_population THEN 'Suburban'
@@ -91,30 +91,30 @@ geo_enriched AS (
 )
 
 SELECT
-    -- Clés
+    -- Keys
     station_id,
     station_code,
-    -- Attributs descriptifs
+    -- Descriptive attributes
     name AS station_name,
     capacity,
     station_size_category,
     geometry,
-    -- Enrichissement géographique commune
+    -- Municipality geographic enrichment
     commune_name,
     commune_code,
     commune_population,
     department_number,
-    -- Population locale 500m (statique, haute résolution, SCD2-aware)
+    -- Local 500m population (static, high resolution, SCD2-aware)
     population_500m,
     ROUND(local_population_per_bike, 0)   AS local_population_per_bike,
     population_density_500m,
-    -- Métadonnées opérationnelles
+    -- Operational metadata
     rental_methods,
     -- SCD Type 2
     valid_from,
     valid_to,
     current_validity,
-    -- Flags qualité
+    -- Quality flags
     CASE WHEN commune_name       IS NOT NULL THEN true ELSE false END AS has_geo_enrichment,
     CASE WHEN commune_population IS NOT NULL THEN true ELSE false END AS has_commune_population,
     CASE WHEN population_500m    > 0         THEN true ELSE false END AS has_local_population_500m

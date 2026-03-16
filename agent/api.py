@@ -1,10 +1,10 @@
 """
-FastAPI wrapper pour l'agent Vélib.
+FastAPI wrapper for the Vélib agent.
 
-Endpoint : POST /ask  {"question": str} → {"answer": str}
+Endpoint: POST /ask  {"question": str} → {"answer": str}
 
-Utilisé par le module Shiny via httr2.
-Variables d'environnement requises : identiques à agent.py + GROQ_API_KEY.
+Used by the Shiny module via httr2.
+Required environment variables: same as agent.py + GROQ_API_KEY.
 """
 
 import logging
@@ -46,7 +46,7 @@ def health():
 @app.post("/ask")
 async def ask_endpoint(q: Question):
     if not q.question.strip():
-        raise HTTPException(status_code=400, detail="Question vide.")
+        raise HTTPException(status_code=400, detail="Empty question.")
 
     server_params = StdioServerParameters(
         command="python",

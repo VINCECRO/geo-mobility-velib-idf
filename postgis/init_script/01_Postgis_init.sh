@@ -11,13 +11,13 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     CREATE EXTENSION IF NOT EXISTS postgis;
     CREATE EXTENSION IF NOT EXISTS postgis_topology;
 
-    -- Schéma raw
+    -- Raw schema
     CREATE SCHEMA IF NOT EXISTS raw;
     
-    -- Table SCD2 des stations
+    -- SCD2 stations table
     CREATE TABLE IF NOT EXISTS raw.stations_scd (
-        id SERIAL PRIMARY KEY,                    -- ← Clé primaire auto-incrémentée
-        station_id BIGINT NOT NULL,                  -- ← Pas PRIMARY KEY, peut se répéter
+        id SERIAL PRIMARY KEY,                    -- ← Auto-incremented primary key
+        station_id BIGINT NOT NULL,                  -- ← Not PRIMARY KEY, can repeat
         station_code TEXT,
         name TEXT,
         capacity INT,
@@ -27,26 +27,26 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
         station_opening_hours TEXT,
         hash_diff VARCHAR(32) NOT NULL,
         valid_from TIMESTAMPTZ DEFAULT now(),
-        valid_to TIMESTAMPTZ,                       -- ← NULL = enregistrement actuel
+        valid_to TIMESTAMPTZ,                       -- ← NULL = current record
         current_validity BOOLEAN DEFAULT TRUE,
         last_updated_at TIMESTAMPTZ,
         extracted_at TIMESTAMPTZ,
         last_extracted_at TIMESTAMPTZ 
     );
     
-    -- Index unique partiel : garantit un seul enregistrement current par station
+    -- Partial unique index: ensures a single current record per station
     CREATE UNIQUE INDEX IF NOT EXISTS unique_current_station_idx 
     ON raw.stations_scd(station_id) 
     WHERE current_validity = TRUE;
     
-    -- Autres index pour performance
+    -- Additional indexes for performance
     CREATE INDEX IF NOT EXISTS idx_stations_scd_station_id 
     ON raw.stations_scd(station_id);
     
     CREATE INDEX IF NOT EXISTS idx_stations_scd_valid_from 
     ON raw.stations_scd(valid_from DESC);
     
-    -- Table des statuts de stations
+    -- Station status table
     CREATE TABLE IF NOT EXISTS raw.station_status (
         id SERIAL PRIMARY KEY,
         station_id BIGINT NOT NULL,
@@ -82,4 +82,4 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "postgres" <<-EOSQL
     ALTER DATABASE ${POSTGRES_DB} SET timezone TO 'Europe/Paris';
 EOSQL
 
-echo "✓ Initialisation terminée avec succès!"
+echo "✓ Initialization completed successfully!"

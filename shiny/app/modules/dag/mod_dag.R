@@ -1,12 +1,12 @@
 # mod_dag.R
-# Dashboard de monitoring des DAG Airflow
+# Airflow DAG monitoring dashboard
 #
-# Mode "Tout l'historique" (défaut) :
-#   Waffle agrégé par (date × heure) — couleur = pire statut de l'heure
+# "Full history" mode (default):
+#   Waffle aggregated by (date × hour) — color = worst status of the hour
 #
-# Mode "Date spécifique" :
-#   Waffle détaillé par (heure × run #) — couleur = statut individuel
-#   + accès futur aux task_instance par clic sur un carré
+# "Specific date" mode:
+#   Detailed waffle by (hour × run #) — color = individual status
+#   + future access to task_instance by clicking a cell
 
 mod_dag_ui <- function(id) {
   ns <- NS(id)
@@ -18,7 +18,7 @@ mod_dag_ui <- function(id) {
 
       materialSwitch(
         inputId = ns("use_custom_date"),
-        label   = "Voir une date spécifique",
+        label   = "View specific date",
         status  = "info",
         value   = FALSE
       ),
@@ -26,34 +26,34 @@ mod_dag_ui <- function(id) {
       uiOutput(ns("snapshot_info"))
     ),
 
-    # ----------- Contenu principal -----------
+    # ----------- Main content -----------
     tags$div(
       style = "padding: 12px; overflow-y: auto;",
 
-      # Ligne KPIs
+      # KPI row
       layout_columns(
         col_widths = c(3, 3, 3, 3),
 
         value_box(
-          title    = "DAGs actifs",
+          title    = "Active DAGs",
           value    = textOutput(ns("kpi_n_dags"), inline = TRUE),
           showcase = bsicons::bs_icon("diagram-3"),
           theme    = "primary"
         ),
         value_box(
-          title    = "Runs totaux",
+          title    = "Total runs",
           value    = textOutput(ns("kpi_n_runs"), inline = TRUE),
           showcase = bsicons::bs_icon("play-circle"),
           theme    = "info"
         ),
         value_box(
-          title    = "Taux de succès",
+          title    = "Success rate",
           value    = textOutput(ns("kpi_success_rate"), inline = TRUE),
           showcase = bsicons::bs_icon("check-circle-fill"),
           theme    = "success"
         ),
         value_box(
-          title    = "Runs échoués",
+          title    = "Failed runs",
           value    = textOutput(ns("kpi_n_failed"), inline = TRUE),
           showcase = bsicons::bs_icon("x-circle-fill"),
           theme    = "danger"
@@ -62,7 +62,7 @@ mod_dag_ui <- function(id) {
 
       tags$div(class = "mt-3"),
 
-      # Waffle charts dynamiques (une card par DAG)
+      # Dynamic waffle charts (one card per DAG)
       uiOutput(ns("waffle_ui"))
     )
   )
@@ -71,16 +71,16 @@ mod_dag_ui <- function(id) {
 mod_dag_server <- function(id, pool) {
   moduleServer(id, function(input, output, session) {
 
-    # --- Sous-module : sélection de date ---
+    # --- Sub-module: date selection ---
     snap          <- dag_snapshot_server(input, output, session, pool)
     selected_date <- snap$selected_date
 
-    # --- Données brutes : tous les dag runs (filtrés si date sélectionnée) ---
+    # --- Raw data: all DAG runs (filtered if a date is selected) ---
     dag_runs <- reactive({
       date_val <- selected_date()
 
       if (is.null(date_val)) {
-        # Tout l'historique — colonnes nécessaires au waffle agrégé
+        # Full history — columns needed for the aggregated waffle
         query(pool, "
           SELECT
             dag_id,
@@ -95,7 +95,7 @@ mod_dag_server <- function(id, pool) {
           ORDER BY dag_id, logical_date
         ")
       } else {
-        # Date spécifique — colonnes + run_of_hour pour le waffle détaillé
+        # Specific date — extra run_of_hour column for the detailed waffle
         query(pool, glue("
           SELECT
             dag_id,
@@ -117,10 +117,10 @@ mod_dag_server <- function(id, pool) {
       }
     })
 
-    # --- Sous-module : KPIs ---
+    # --- Sub-module: KPIs ---
     dag_kpis_server(input, output, session, dag_runs)
 
-    # --- Sous-module : Waffle charts ---
+    # --- Sub-module: Waffle charts ---
     dag_waffle_server(input, output, session, dag_runs, selected_date)
   })
 }

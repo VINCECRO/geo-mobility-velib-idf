@@ -11,7 +11,6 @@ server <- function(input, output, session) {
 
   # ===========================================================================
   # Global Data
-  #
   # ===========================================================================
 
   # Active stations
@@ -33,21 +32,21 @@ server <- function(input, output, session) {
       WHERE current_validity = TRUE
       ORDER BY station_name
     ")
-  }) %>% bindCache("stations_dim")  # cache statique
+  }) %>% bindCache("stations_dim")  # static cache
 
-  # Define last snapshot
+  # Latest snapshot timestamp
   last_snapshot <- reactive({
     query(pool_velib,"SELECT MAX(extracted_at) AS ts FROM marts.fct_station_availability") %>%
       pull(ts)
   })
 
-  # Last recorded timestamp print in navbar
+  # Last recorded timestamp displayed in navbar
   output$last_update <- renderText({
     ts <- last_snapshot()
     paste("Last snapshot :", format(ts, "%d/%m/%Y %H:%M"))
   })
 
-  # Update every 5 minutes
+  # Refresh every 5 minutes
   autoInvalidate <- reactiveTimer(300000)
   observe({
     autoInvalidate()
@@ -56,8 +55,8 @@ server <- function(input, output, session) {
   })
 
   # ===========================================================================
-  # MODULE : Global View
-  # KPIs agregate over last snapshot
+  # MODULE: Global View
+  # KPIs aggregated over the last snapshot
   # ===========================================================================
 
   mod_overview_server("overview",
@@ -67,8 +66,8 @@ server <- function(input, output, session) {
   )
 
   # ===========================================================================
-  # MODULE : PAR STATION
-  # Drill-down sur une station + navigation temporelle slider 5 min
+  # MODULE: Per Station
+  # Drill-down on a station + temporal navigation with 5-min slider
   # ===========================================================================
 
   # mod_station_server("station",
@@ -78,8 +77,8 @@ server <- function(input, output, session) {
   # )
 
   # ===========================================================================
-  # MODULE : TEMPOREL
-  # Vue calendrier → jour → heure → tranche 5 min
+  # MODULE: Temporal
+  # Calendar view → day → hour → 5-min slot
   # ===========================================================================
 
   # mod_temporal_server("temporal",
@@ -87,8 +86,8 @@ server <- function(input, output, session) {
   # )
 
   # ===========================================================================
-  # MODULE : CARTE COMMUNAL
-  # Leaflet avec état en temps réel par station
+  # MODULE: Commune Map
+  # Leaflet map with real-time station state
   # ===========================================================================
 
   mod_geo_server("geo",
@@ -96,12 +95,12 @@ server <- function(input, output, session) {
   )
 
   # ===========================================================================
-  # MODULE : SQL explorer for Velib Data & Dag data
+  # MODULE: SQL Explorer for Velib Data & DAG data
   # ===========================================================================
 
   # ===========================================================================
-  # MODULE : DAG MONITORING
-  # Waffle chart des dag runs (historique ou date spécifique)
+  # MODULE: DAG Monitoring
+  # Waffle chart of DAG runs (history or specific date)
   # ===========================================================================
 
   mod_dag_server("dag", pool = pool_dag)

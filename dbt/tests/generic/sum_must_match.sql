@@ -16,7 +16,7 @@ WITH comparison AS (
 
     FROM {{ model }}
     WHERE 
-        -- La somme n'est pas cohérente
+        -- Sum is inconsistent
         ABS(COALESCE({{ column_a }}, 0) + COALESCE({{ column_b }}, 0)) != COALESCE({{ column_c }}, 0))
 
 SELECT 

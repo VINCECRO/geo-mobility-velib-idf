@@ -29,9 +29,7 @@ mod_sql_explorer_ui <- function(id) {
       class = "d-flex justify-content-between",
       "Result",
       uiOutput(ns("query_info"))),
-      # Table résultats , 
       DTOutput(ns("result_table")),
-      # Zone erreur
       uiOutput(ns("error_msg"))
     )
   )

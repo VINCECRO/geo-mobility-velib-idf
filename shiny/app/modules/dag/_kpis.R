@@ -1,5 +1,5 @@
 # dag/_kpis.R
-# KPI value boxes pour le dashboard DAG
+# KPI value boxes for the DAG dashboard
 
 dag_kpis_server <- function(input, output, session, dag_runs) {
 

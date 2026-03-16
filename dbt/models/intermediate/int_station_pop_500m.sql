@@ -19,7 +19,7 @@ WITH stations_lambert AS (
     FROM {{ ref('stg_velib_station_historical') }}
 
     {% if is_incremental() %}
-        -- Uniquement les nouvelles versions SCD2 pas encore calculées
+        -- Only new SCD2 versions not yet computed
         WHERE valid_from > (SELECT MAX(valid_from) FROM {{ this }})
     {% endif %}
 ),

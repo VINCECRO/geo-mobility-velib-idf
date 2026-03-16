@@ -1,16 +1,16 @@
 # dag/_waffle.R
 #
-# Mode "tout l'historique" (selected_date = NULL) :
-#   plotly heatmap — x = date, y = heure (0-23)
-#   couleur = statut agrégé (pire de l'heure)
-#   → cellules adjacentes parfaites sans calcul de taille de marqueur
+# "Full history" mode (selected_date = NULL):
+#   plotly heatmap — x = date, y = hour (0-23)
+#   color = aggregated status (worst of the hour)
+#   → perfect adjacent cells without marker size calculation
 #
-# Mode "date spécifique" (selected_date = "YYYY-MM-DD") :
-#   plotly scatter + marqueurs carrés, disposition en blocs 2×6 par heure :
-#     - 6 heures par ligne de blocs  → 4 lignes de blocs (24h)
-#     - chaque heure = bloc 2 rangées × 6 colonnes (12 cases max)
-#     - séparateur d'1 case entre les blocs
-#   → ressemble à la grille waffle de référence
+# "Specific date" mode (selected_date = "YYYY-MM-DD"):
+#   plotly scatter + square markers, arranged in 2×6 blocks per hour:
+#     - 6 hours per block row → 4 block rows (24h)
+#     - each hour = 2-row × 6-column block (max 12 cells)
+#     - 1-cell separator between blocks
+#   → resembles a reference waffle grid
 
 DAG_STATE_COLORS <- c(
   "success"      = "#2ecc71",
@@ -21,7 +21,7 @@ DAG_STATE_COLORS <- c(
   "empty"        = "#dfe6e9"
 )
 
-# Ordre des statuts pour l'agrégation et la colorscale
+# State ordering for aggregation and colorscale
 .STATE_LEVELS   <- c("success", "failed", "running", "queued", "up_for_retry", "empty")
 .state_priority <- c(failed = 5, running = 4, up_for_retry = 3, queued = 2, success = 1, empty = 0)
 
@@ -31,8 +31,8 @@ DAG_STATE_COLORS <- c(
   names(which.max(.state_priority[known]))
 }
 
-# Colorscale discrète pour plotly heatmap (transitions nettes, sans interpolation)
-# zmin = 0, zmax = n-1 ; état i → z = i → fraction = i/(n-1)
+# Discrete colorscale for plotly heatmap (sharp transitions, no interpolation)
+# zmin = 0, zmax = n-1; state i → z = i → fraction = i/(n-1)
 .discrete_colorscale <- function(state_levels, colors) {
   n  <- length(state_levels)
   cs <- vector("list", 2L * n - 1L)
@@ -46,7 +46,7 @@ DAG_STATE_COLORS <- c(
 }
 
 # ===========================================================================
-# Mode historique : heatmap date × heure
+# History mode: date × hour heatmap
 # ===========================================================================
 
 .make_history_waffle <- function(df_dag) {
@@ -66,13 +66,13 @@ DAG_STATE_COLORS <- c(
 
   state_idx <- setNames(seq_along(.STATE_LEVELS) - 1L, .STATE_LEVELS)
 
-  # Matrices [24 heures × n_dates]
+  # Matrices [24 hours × n_dates]
   z_mat     <- matrix(state_idx["empty"], nrow = 24L, ncol = n_dates)
   hover_mat <- matrix("", nrow = 24L, ncol = n_dates)
 
   for (k in seq_len(nrow(df_agg))) {
     d  <- which(all_dates == as.Date(df_agg$run_date[k]))
-    h  <- as.integer(df_agg$run_hour[k]) + 1L   # 1-based (heure 0 → ligne 1)
+    h  <- as.integer(df_agg$run_hour[k]) + 1L   # 1-based (hour 0 → row 1)
     st <- df_agg$agg_state[k]
     if (!(st %in% names(state_idx))) st <- "empty"
     z_mat[h, d]     <- state_idx[st]
@@ -80,17 +80,17 @@ DAG_STATE_COLORS <- c(
       "<b>", st, "</b><br>",
       format(as.Date(df_agg$run_date[k]), "%d/%m/%Y"), " – ",
       sprintf("%02dh", h - 1L), "<br>",
-      "Runs : ", df_agg$n_runs[k]
+      "Runs: ", df_agg$n_runs[k]
     )
   }
 
-  # Remplir le hover des cases vides
+  # Fill hover text for empty cells
   for (h in seq_len(24L)) {
     for (d in seq_len(n_dates)) {
       if (hover_mat[h, d] == "") {
         hover_mat[h, d] <- paste0(
           format(all_dates[d], "%d/%m/%Y"), " – ",
-          sprintf("%02dh", h - 1L), " — aucun run"
+          sprintf("%02dh", h - 1L), " — no runs"
         )
       }
     }
@@ -99,7 +99,7 @@ DAG_STATE_COLORS <- c(
   cs <- .discrete_colorscale(.STATE_LEVELS, DAG_STATE_COLORS)
   n  <- length(.STATE_LEVELS)
 
-  # Ticks x : au plus 20 dates affichées
+  # x-axis ticks: at most 20 dates shown
   tick_step <- max(1L, ceiling(n_dates / 20L))
   tick_idxs <- seq(1L, n_dates, by = tick_step)
 
@@ -146,17 +146,17 @@ DAG_STATE_COLORS <- c(
 }
 
 # ===========================================================================
-# Mode date spécifique : blocs horaires 2×6
+# Specific date mode: 2×6 hourly blocks
 # ===========================================================================
-# Disposition : 6 heures par ligne de blocs, 4 lignes → 24 heures
-# Chaque heure h occupe un bloc de 2 rangées × 6 colonnes
-# Séparateur d'1 case entre les blocs (multiplicateur 7 en x, 3 en y)
+# Layout: 6 hours per block row, 4 rows → 24 hours
+# Each hour h occupies a 2-row × 6-column block
+# 1-cell separator between blocks (multiplier 7 in x, 3 in y)
 
 .hour_run_xy <- function(h, i_0based) {
-  # h        : 0..23 — numéro de l'heure
-  # i_0based : 0..N-1 — rang du run dans l'heure (0-indexé)
-  x <- (h %% 6L) * 7L + (i_0based %% 6L)    # colonne absolue (0..41)
-  y <- (h %/% 6L) * 3L + (i_0based %/% 6L)  # rangée absolue  (0..10)
+  # h        : 0..23 — hour number
+  # i_0based : 0..N-1 — run rank within the hour (0-indexed)
+  x <- (h %% 6L) * 7L + (i_0based %% 6L)    # absolute column (0..41)
+  y <- (h %/% 6L) * 3L + (i_0based %/% 6L)  # absolute row    (0..10)
   c(x = x, y = y)
 }
 
@@ -172,12 +172,12 @@ DAG_STATE_COLORS <- c(
   df$hover_txt  <- paste0(
     "<b>", df$state, "</b><br>",
     sprintf("%02dh – run #%d", df$h, df$i + 1L), "<br>",
-    "Run ID : ", df$run_id, "<br>",
-    "Début : ", format(df$start_date, "%H:%M:%S"), "<br>",
-    "Fin : ",   ifelse(is.na(df$end_date), "—", format(df$end_date, "%H:%M:%S"))
+    "Run ID: ", df$run_id, "<br>",
+    "Start: ", format(df$start_date, "%H:%M:%S"), "<br>",
+    "End: ",   ifelse(is.na(df$end_date), "—", format(df$end_date, "%H:%M:%S"))
   )
 
-  # Grille complète 24h × 12 runs = 288 cases (placeholders gris clair)
+  # Full 24h × 12 runs = 288 slots grid (light grey placeholders)
   slots  <- data.frame(h = rep(0:23, each = 12L), i = rep(0:11, times = 24L))
   xy_all <- t(mapply(.hour_run_xy, slots$h, slots$i))
   df_empty <- data.frame(
@@ -187,7 +187,7 @@ DAG_STATE_COLORS <- c(
     hover_txt  = " ",
     stringsAsFactors = FALSE
   )
-  # Retirer les positions déjà occupées par des runs
+  # Remove positions already occupied by actual runs
   actual_xy <- paste(df$x_val, df$y_val)
   df_empty  <- df_empty[!paste(df_empty$x_val, df_empty$y_val) %in% actual_xy, ]
 
@@ -196,7 +196,7 @@ DAG_STATE_COLORS <- c(
     df_empty
   )
 
-  # Labels horaires au-dessus de chaque bloc (annotation)
+  # Hour labels above each block (annotation)
   hour_annots <- lapply(0:23, function(h) {
     list(
       x         = (h %% 6L) * 7L + 2.5,
@@ -246,7 +246,7 @@ DAG_STATE_COLORS <- c(
 }
 
 # ===========================================================================
-# Dispatcher + rendu dynamique
+# Dispatcher + dynamic rendering
 # ===========================================================================
 
 .make_waffle <- function(df_dag, is_date_mode) {
@@ -263,12 +263,12 @@ dag_waffle_server <- function(input, output, session, dag_runs, selected_date) {
 
   dag_ids <- reactive({ sort(unique(dag_runs()$dag_id)) })
 
-  # UI dynamique : une card par DAG
+  # Dynamic UI: one card per DAG
   output$waffle_ui <- renderUI({
     ids <- dag_ids()
     if (length(ids) == 0) {
       return(tags$div(class = "text-muted text-center mt-4",
-                      bsicons::bs_icon("inbox"), " Aucun dag run trouvé."))
+                      bsicons::bs_icon("inbox"), " No DAG runs found."))
     }
     df_all <- dag_runs()
 
@@ -303,7 +303,7 @@ dag_waffle_server <- function(input, output, session, dag_runs, selected_date) {
     })
   })
 
-  # Rendu des plots
+  # Render plots
   observe({
     ids      <- dag_ids()
     df_all   <- dag_runs()
